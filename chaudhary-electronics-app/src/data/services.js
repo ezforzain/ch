@@ -1,0 +1,141 @@
+// Verbatim from the #services "bento" grid in Chaudhary Electronics.dc.html (lines 156-201).
+// The source only carries English copy for these tiles (no data-lang="ur" spans inside the
+// grid, unlike the section heading) — Services.jsx therefore renders title/desc as plain text.
+//
+// span: how many grid columns the tile occupies (grid-template-columns: repeat(auto-fit,minmax(250px,1fr)))
+// minH: min-height in px
+// gradEnd: bottom-stop opacity of the linear-gradient(180deg, rgba(15,14,11,gradStart), rgba(15,14,11,gradEnd))
+//   gradStart is 0.15 for span-2 tiles and 0.1 for span-1 tiles, matching source exactly.
+// titleClass/descClass: transcribed per-tile (the two span-2 tiles use slightly different
+// title clamp() values from each other, so this isn't purely derivable from `span`).
+//
+// cost/installTime/bestFor: added for the "Quick comparison" table appended below the bento
+// grid (new feature, not present in source). Values are reasonable ballpark figures consistent
+// with each tile's existing desc copy — not sourced from the original design.
+
+const COMPACT_TITLE = 'text-[22px] font-[660] tracking-[-0.028em]';
+const COMPACT_DESC = 'mt-[5px] text-[14px] text-[rgba(245,242,236,0.72)]';
+
+export const services = [
+  {
+    id: 'solar-installation',
+    href: '#category/solar-panels',
+    img: 'https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?auto=format&fit=crop&w=1400&q=80',
+    fb: 'solar,panels',
+    alt: 'Solar array',
+    span: 2,
+    minH: 340,
+    gradEnd: 0.88,
+    shadow: true,
+    badge: 'MOST REQUESTED',
+    title: 'Solar installation',
+    desc: 'On-grid, off-grid and hybrid · 3 kW to 500 kW',
+    titleClass: 'text-[clamp(24px,2.6vw,32px)] font-semibold tracking-[-0.03em]',
+    descClass: 'mt-[6px] text-[15.5px] text-[rgba(245,242,236,0.78)]',
+    cost: 'PKR 250k – 3.5M',
+    installTime: '3–7 days',
+    bestFor: 'Homes & rooftops',
+  },
+  {
+    id: 'backup-ups',
+    href: '#category/batteries',
+    img: 'https://images.unsplash.com/photo-1621905251918-48416bd8575a?auto=format&fit=crop&w=900&q=80',
+    fb: 'battery,energy,storage',
+    alt: 'Battery storage',
+    span: 1,
+    minH: 340,
+    gradEnd: 0.85,
+    title: 'Backup & UPS',
+    desc: 'Inverters, lithium and tubular banks',
+    titleClass: COMPACT_TITLE,
+    descClass: COMPACT_DESC,
+    cost: 'PKR 45k – 400k',
+    installTime: '1 day',
+    bestFor: 'Load-shedding backup',
+  },
+  {
+    id: 'wiring-rewiring',
+    href: '#category/wires-cables',
+    img: 'https://images.unsplash.com/photo-1621905251918-48416bd8575a?auto=format&fit=crop&w=900&q=80',
+    fb: 'electrical,wiring',
+    alt: 'Electrical wiring',
+    span: 1,
+    minH: 340,
+    gradEnd: 0.85,
+    title: 'Wiring & rewiring',
+    desc: 'Homes, shops and offices, to code',
+    titleClass: COMPACT_TITLE,
+    descClass: COMPACT_DESC,
+    cost: 'PKR 80k – 600k',
+    installTime: '2–5 days',
+    bestFor: 'New builds & renovations',
+  },
+  {
+    id: 'cctv-security',
+    href: '#category/tools-accessories',
+    img: 'https://images.unsplash.com/photo-1557597774-9d273605dfa9?auto=format&fit=crop&w=900&q=80',
+    fb: 'cctv,security,camera',
+    alt: 'Security camera',
+    span: 1,
+    minH: 280,
+    gradEnd: 0.85,
+    title: 'CCTV & security',
+    desc: '4K IP cameras, NVR, phone viewing',
+    titleClass: COMPACT_TITLE,
+    descClass: COMPACT_DESC,
+    cost: 'PKR 35k – 250k',
+    installTime: '1 day',
+    bestFor: 'Homes & retail',
+  },
+  {
+    id: 'generators',
+    href: '#quote',
+    img: 'https://images.unsplash.com/photo-1613665813446-82a78c468a1d?auto=format&fit=crop&w=900&q=80',
+    fb: 'generator,industrial,engine',
+    alt: 'Generator',
+    span: 1,
+    minH: 280,
+    gradEnd: 0.85,
+    title: 'Generators',
+    desc: 'Supply, ATS panels, servicing',
+    titleClass: COMPACT_TITLE,
+    descClass: COMPACT_DESC,
+    cost: 'PKR 150k – 2M',
+    installTime: '1–2 days',
+    bestFor: 'Critical backup power',
+  },
+  {
+    id: 'commercial-industrial',
+    href: '#quote',
+    img: 'https://images.unsplash.com/photo-1613665813446-82a78c468a1d?auto=format&fit=crop&w=1400&q=80',
+    fb: 'factory,industrial,solar',
+    alt: 'Industrial site',
+    span: 2,
+    minH: 280,
+    gradEnd: 0.86,
+    title: 'Commercial & industrial',
+    desc: 'Factories, plazas, cold storage, farms · HT/LT panels',
+    titleClass: 'text-[clamp(22px,2.4vw,28px)] font-semibold tracking-[-0.03em]',
+    descClass: 'mt-[5px] text-[15.5px] text-[rgba(245,242,236,0.78)]',
+    cost: 'PKR 1M – 15M+',
+    installTime: '2–8 weeks',
+    bestFor: 'Factories & plazas',
+  },
+  {
+    id: 'repairs-maintenance',
+    href: '#quote',
+    img: 'https://images.unsplash.com/photo-1559302504-64aae6ca6b6d?auto=format&fit=crop&w=900&q=80',
+    fb: 'electrician,maintenance,work',
+    alt: 'Maintenance crew',
+    span: 1,
+    minH: 280,
+    gradEnd: 0.85,
+    title: 'Repairs & maintenance',
+    desc: 'Annual contracts, 48-hour response',
+    titleClass: COMPACT_TITLE,
+    descClass: COMPACT_DESC,
+    cost: 'PKR 5k – 50k / visit',
+    installTime: 'Same day',
+    bestFor: 'Annual upkeep',
+  },
+];

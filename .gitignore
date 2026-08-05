@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build output
+dist/
+dist-ssr/
+build/
+
+# Env files (never commit secrets — .env.example files ARE committed)
+.env
+.env.local
+.env.*.local
+**/.env
+!**/.env.example
+
+# Local upload storage (dev-only fallback; production uses Cloudinary)
+server/uploads/
+!server/uploads/.gitkeep
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS/editor cruft
+.DS_Store
+*.local
+
+# Stale local-only artifacts not part of the actual project (source zips, a
+# duplicate extracted copy, and a nested duplicate app folder left over from
+# an earlier import — none of these are the real source of truth).
+*.zip
+/extracted/
+/Chaudhary Electronics image rebuild (1)/
+/chaudhary-electronics-app/chaudhary-electronics-app/

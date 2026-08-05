@@ -1,0 +1,119 @@
+@import "tailwindcss";
+
+/* Class-based dark mode (Tailwind v4 defaults to OS-preference media queries) — scoped to
+   whichever subtree carries a `.dark` class, e.g. the Login page's manual light/dark toggle. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-acc: #e2a347;
+  --color-acc-soft: #f7ecd9;
+  --color-ink: #17150f;
+  --color-mut: #6e675c;
+  --color-line: rgba(23, 21, 15, 0.1);
+  --color-paper: #f5f2ec;
+  --color-dark: #0f0e0b;
+  --font-sans: "Inter", "Noto Sans Arabic", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+  --font-urdu: "Noto Sans Arabic", "Inter", sans-serif;
+}
+
+/* Scoped under Tailwind's `base` cascade layer so utility classes (which live in
+   Tailwind's `utilities` layer) can still override these defaults — unlayered CSS
+   always wins over layered CSS regardless of selector specificity, so leaving these
+   rules unlayered would make e.g. `text-paper` unable to override the `a { color }`
+   rule below. */
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    margin: 0;
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: 17px;
+    line-height: 1.6;
+    font-weight: 400;
+    letter-spacing: -0.011em;
+    font-optical-sizing: auto;
+    font-feature-settings: "cv05" 1, "cv11" 1, "ss03" 1, "tnum" 0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+  }
+  h1, h2, h3, h4 {
+    font-weight: 620;
+    letter-spacing: -0.032em;
+    line-height: 1.06;
+    text-wrap: balance;
+    margin: 0;
+  }
+  h1 { letter-spacing: -0.042em; }
+  p { text-wrap: pretty; margin: 0; }
+  input, select, button, textarea { font-family: inherit; letter-spacing: -0.011em; }
+  [dir="rtl"] { text-align: right; }
+  [dir="rtl"] h1, [dir="rtl"] h2, [dir="rtl"] h3 { letter-spacing: 0; line-height: 1.28; font-weight: 700; }
+  [lang="ur"], [data-lang="ur"] { letter-spacing: 0; font-feature-settings: normal; }
+  [data-tnum], [aria-live] { font-variant-numeric: tabular-nums; }
+  @media (max-width: 640px) { body { font-size: 16px; } }
+  a { color: var(--color-ink); text-decoration: none; }
+  img { display: block; max-width: 100%; }
+  button, input, select { font-family: inherit; }
+  ::selection { background: var(--color-acc); color: #17150f; }
+  :focus-visible { outline: 2px solid var(--color-acc); outline-offset: 3px; border-radius: 999px; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+  /* The pill navbar is fixed (~90px tall incl. its top offset) and floats over
+     content, so anchor jumps (#services, #work, etc.) need this much headroom
+     or the section heading lands hidden underneath it. */
+  #top, #services, #work, #planner, #products, #quote {
+    scroll-margin-top: 104px;
+  }
+  input[type="range"] { -webkit-appearance: none; appearance: none; background: transparent; }
+  input[type="range"]::-webkit-slider-runnable-track {
+    height: 4px; border-radius: 4px; background: rgba(23, 21, 15, 0.14);
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 26px; height: 26px; margin-top: -11px;
+    border-radius: 50%; background: var(--color-ink); border: 5px solid var(--color-paper);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25); cursor: pointer;
+  }
+}
+
+@keyframes ce-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+@keyframes ce-hint { 0% { transform: translateY(0); opacity: 0; } 30% { opacity: 1; } 100% { transform: translateY(14px); opacity: 0; } }
+@keyframes ce-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+/* Hero background — slow-drifting glow blobs behind the parallax photo (subtle, premium). */
+@keyframes ce-drift-a {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(60px, 40px) scale(1.12); }
+}
+@keyframes ce-drift-b {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-70px, -35px) scale(1.08); }
+}
+@keyframes ce-drift-c {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(40px, -55px) scale(1.15); }
+}
+
+@keyframes ce-page-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+@layer utilities {
+  .animate-ce-hint { animation: ce-hint 2.4s ease-in-out infinite; }
+  .animate-ce-marquee { animation: ce-marquee 34s linear infinite; }
+  .animate-ce-shimmer { animation: ce-shimmer 1.8s linear infinite; }
+  .animate-ce-drift-a { animation: ce-drift-a 22s ease-in-out infinite; }
+  .animate-ce-drift-b { animation: ce-drift-b 27s ease-in-out infinite; }
+  .animate-ce-drift-c { animation: ce-drift-c 32s ease-in-out infinite; }
+  .animate-ce-page-in { animation: ce-page-in 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+}
