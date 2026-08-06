@@ -108,6 +108,18 @@
 
 @keyframes ce-page-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
+/* Login illustration — small floating icon chips (Login.jsx brand panel) and the
+   success checkmark that pops in once sign-in resolves before we redirect. */
+@keyframes ce-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+@keyframes ce-pop {
+  0% { transform: scale(0.5); opacity: 0; }
+  60% { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
 @layer utilities {
   .animate-ce-hint { animation: ce-hint 2.4s ease-in-out infinite; }
   .animate-ce-marquee { animation: ce-marquee 34s linear infinite; }
@@ -116,4 +128,6 @@
   .animate-ce-drift-b { animation: ce-drift-b 27s ease-in-out infinite; }
   .animate-ce-drift-c { animation: ce-drift-c 32s ease-in-out infinite; }
   .animate-ce-page-in { animation: ce-page-in 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+  .animate-ce-float { animation: ce-float 5s ease-in-out infinite; }
+  .animate-ce-pop { animation: ce-pop 0.4s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
 }
