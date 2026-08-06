@@ -197,7 +197,7 @@ export default function Messages() {
           open
           onClose={() => setViewRow(null)}
           align="center"
-          overlayClassName="bg-[rgba(15,14,11,0.28)] backdrop-blur-md"
+          overlayClassName="bg-transparent"
         >
           <div className="animate-admin-modal-in flex w-full max-w-[460px] flex-col gap-3 rounded-[20px] bg-[var(--a-white)] p-6 shadow-[0_24px_64px_rgba(0,0,0,0.35)]">
             <div className="text-base font-bold">{viewRow.subject || 'General inquiry'}</div>
@@ -225,7 +225,7 @@ export default function Messages() {
           onClose={() => setReplyRow(null)}
           align="center"
           labelledBy="reply-modal-title"
-          overlayClassName="bg-[rgba(15,14,11,0.28)] backdrop-blur-md"
+          overlayClassName="bg-transparent"
         >
           <div className="animate-admin-modal-in flex w-full max-w-[460px] flex-col gap-3 rounded-[20px] bg-[var(--a-white)] p-6 shadow-[0_24px_64px_rgba(0,0,0,0.35)]">
             <div id="reply-modal-title" className="text-base font-bold">

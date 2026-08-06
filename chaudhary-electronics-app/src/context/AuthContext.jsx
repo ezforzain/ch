@@ -84,10 +84,11 @@ export function useAuth() {
   return ctx;
 }
 
-/** Where to send a user right after login/register — the only dashboard that
- * actually exists is the admin panel, so every other role lands on the site home. */
+/** Where to send a user right after login/register, based on role. */
 export function redirectPathForRole(role) {
-  return ['admin', 'superadmin'].includes(role) ? '/admin' : '/';
+  if (['admin', 'superadmin'].includes(role)) return '/admin';
+  if (role === 'seller') return '/seller';
+  return '/'; // customer/buyer
 }
 
 export { ApiRequestError };

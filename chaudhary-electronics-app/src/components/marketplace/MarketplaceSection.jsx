@@ -1,19 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import Bi from '../ui/Bi';
 import { useToast } from '../../context/ToastContext';
-import { useLocalStorage } from '../../hooks/useLocalStorage';
-import { fmtPKR, waLink } from '../../lib/format';
+import { useCart } from '../../context/CartContext';
 import { slugifyCategory } from '../../data/catalogue';
 import { useProducts } from '../../context/ProductsContext';
 import ProductCard from './ProductCard';
-import ProductDetailSheet from './ProductDetailSheet';
 import CartDrawer from './CartDrawer';
 import CompareModal from './CompareModal';
-import ChatPanel from './ChatPanel';
 import Pagination from './Pagination';
 
 const PER_PAGE = 8;
-const WHATSAPP_NUMBER = '920000000000';
 
 // --- search: tokenize + naive singularize + haystack match — transcribed from catalogueVals() ---
 function normalizeText(text) {
@@ -65,56 +62,47 @@ function matchesFilters(p, category, tokens, brand, minPrice, maxPrice) {
 }
 
 /**
- * The `#products` marketplace section. Owns search/sort/filter/pagination
- * state, cart + wishlist (persisted to localStorage exactly like the
- * source's `ce_cart_v1`/`ce_wishlist_v1`), the compare list, and which
- * overlay is open. All math/formatting is delegated to `lib/format.js` and
- * `data/catalogue.js` — this file is state + wiring.
+ * The marketplace grid — rendered at the /marketplace route (see src/pages/Marketplace.jsx).
+ * Owns search/sort/filter/pagination state; cart + wishlist now live in CartContext (shared
+ * with the /product/:id page) instead of local state, and the selected category is derived
+ * from the URL (?category=<slug>) via react-router's useSearchParams instead of the old
+ * #category/<slug> hash convention, so it composes with normal <Link>s from anywhere in the
+ * app and gets real back/forward support. All math/formatting is delegated to `lib/format.js`
+ * and `data/catalogue.js` — this file is state + wiring.
  */
 export default function MarketplaceSection() {
   const showToast = useToast();
-  const sectionRef = useRef(null);
+  const navigate = useNavigate();
   const { products: CATALOGUE, categories: liveCategories, findById } = useProducts();
+  const { wishlist, cartLines, wishItems, cartUnits, addToCart, setLineQty, toggleWish, checkout } = useCart();
 
   // Real categories now come from the database (ProductsContext), not a hardcoded list —
   // 'All' is a UI-only pseudo-category prepended for the filter chips/select.
   const CATEGORIES = useMemo(() => ['All', ...liveCategories.map((c) => c.name)], [liveCategories]);
 
+  const [searchParams, setSearchParams] = useSearchParams();
+  const category = useMemo(() => {
+    const slug = searchParams.get('category');
+    if (!slug) return 'All';
+    return CATEGORIES.find((c) => slugifyCategory(c) === slug) || 'All';
+  }, [searchParams, CATEGORIES]);
+
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState('popular');
-  const [category, setCategory] = useState('All');
   const [brand, setBrand] = useState('All');
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
 
-  const [sheet, setSheet] = useState(null); // 'detail' | 'drawer' | 'compare' | 'chat' | null
-  const [detailId, setDetailId] = useState(null);
-  const [detailImg, setDetailImg] = useState(null);
-  const [detailQty, setDetailQty] = useState(1);
+  const [sheet, setSheet] = useState(null); // 'drawer' | 'compare' | null
   const [drawerKind, setDrawerKind] = useState('cart'); // 'cart' | 'wish'
-
-  const onStorageError = useCallback(
-    () => showToast('Your browser blocked local storage — cart/wishlist changes won\'t be saved after you leave.'),
-    [showToast],
-  );
-  const [cart, setCart] = useLocalStorage('ce_cart_v1', [], onStorageError); // [{ id, qty }]
-  const [wishlist, setWishlist] = useLocalStorage('ce_wishlist_v1', [], onStorageError); // [id]
   const [compare, setCompare] = useState([]); // [id] — not persisted, matches source
 
   const loadTimer = useRef(null);
 
-  // source: componentDidMount() prunes stale ids out of the persisted stores
-  useEffect(() => {
-    setCart((prev) => prev.filter((l) => l && findById(l.id)));
-    setWishlist((prev) => prev.filter((id) => findById(id)));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   const softLoad = useCallback((patch) => {
     setLoading(true);
-    if ('category' in patch) setCategory(patch.category);
     if ('search' in patch) setSearch(patch.search);
     if ('sort' in patch) setSort(patch.sort);
     if ('brand' in patch) setBrand(patch.brand);
@@ -127,66 +115,17 @@ export default function MarketplaceSection() {
 
   useEffect(() => () => clearTimeout(loadTimer.current), []);
 
-  // --- hash-based category routing: #category/<slug> — source: categoryFromHash()/routeFromHash() ---
-  const categoryFromHash = useCallback(() => {
-    const m = (window.location.hash || '').match(/^#category\/(.+)$/);
-    if (!m) return null;
-    const want = decodeURIComponent(m[1]).toLowerCase();
-    return CATEGORIES.find((c) => slugifyCategory(c) === want) || null;
-  }, [CATEGORIES]);
-
-  const routeFromHash = useCallback(
-    (smooth) => {
-      const cat = categoryFromHash();
-      if (!cat) return false;
-      setCategory((prev) => {
-        if (prev !== cat) setSearch('');
-        return cat;
-      });
-      const sec = sectionRef.current;
-      if (sec) {
-        const top = window.scrollY + sec.getBoundingClientRect().top - 84;
-        window.scrollTo({ top: Math.max(0, top), behavior: smooth ? 'smooth' : 'auto' });
-      }
-      return true;
-    },
-    [categoryFromHash],
-  );
-
-  useEffect(() => {
-    const onHash = () => routeFromHash(true);
-    window.addEventListener('hashchange', onHash);
-    if (categoryFromHash()) {
-      const t = setTimeout(() => routeFromHash(false), 60);
-      return () => {
-        clearTimeout(t);
-        window.removeEventListener('hashchange', onHash);
-      };
-    }
-    return () => window.removeEventListener('hashchange', onHash);
-  }, [routeFromHash, categoryFromHash]);
-
   const pickCategory = (cat) => {
-    if (cat === 'All') {
-      if (window.location.hash.startsWith('#category/')) {
-        window.history.replaceState(null, '', window.location.pathname + window.location.search);
-      }
-      softLoad({ category: 'All', page: 1 });
-      return;
-    }
-    const target = '#category/' + slugifyCategory(cat);
-    if (window.location.hash !== target) {
-      window.location.hash = target; // triggers hashchange -> routeFromHash
-    } else {
-      softLoad({ category: cat, page: 1 });
-    }
+    setLoading(true);
+    clearTimeout(loadTimer.current);
+    loadTimer.current = setTimeout(() => setLoading(false), 260);
+    setPage(1);
+    setSearchParams(cat === 'All' ? {} : { category: slugifyCategory(cat) });
   };
 
   const clearFilters = () => {
-    if (window.location.hash.startsWith('#category/')) {
-      window.history.replaceState(null, '', window.location.pathname + window.location.search);
-    }
-    softLoad({ category: 'All', search: '', brand: 'All', minPrice: '', maxPrice: '', page: 1 });
+    setSearchParams({});
+    softLoad({ search: '', brand: 'All', minPrice: '', maxPrice: '', page: 1 });
   };
 
   // --- filter / sort / paginate ---
@@ -235,42 +174,6 @@ export default function MarketplaceSection() {
     [CATALOGUE, CATEGORIES],
   );
 
-  // --- cart / wishlist / compare mutations ---
-  const addToCart = (id, qty = 1) => {
-    const p = findById(id);
-    if (!p) return;
-    if (p.stock <= 0) {
-      showToast(`${p.name} is out of stock`);
-      return;
-    }
-    setCart((prev) => {
-      const next = prev.slice();
-      const line = next.find((l) => l.id === id);
-      const want = Math.max(1, qty || 1);
-      if (line) line.qty = Math.min(p.stock, line.qty + want);
-      else next.push({ id, qty: Math.min(p.stock, want) });
-      return next;
-    });
-    showToast(`${p.name} added to cart`);
-  };
-
-  const setLineQty = (id, qty) => {
-    const p = findById(id);
-    setCart((prev) => {
-      if (qty <= 0) return prev.filter((l) => l.id !== id);
-      return prev.map((l) => (l.id === id ? { ...l, qty: Math.min(p ? p.stock : qty, qty) } : l));
-    });
-  };
-
-  const toggleWish = (id) => {
-    const p = findById(id);
-    setWishlist((prev) => {
-      const has = prev.indexOf(id) >= 0;
-      showToast(p ? (has ? 'Removed from saved' : `${p.name} saved`) : '');
-      return has ? prev.filter((x) => x !== id) : prev.concat([id]);
-    });
-  };
-
   const toggleCompare = (id) => {
     setCompare((prev) => {
       const has = prev.indexOf(id) >= 0;
@@ -285,13 +188,7 @@ export default function MarketplaceSection() {
   };
 
   // --- overlay open/close ---
-  const openDetail = (id) => {
-    const p = findById(id);
-    setDetailId(id);
-    setDetailImg(p ? p.img : null);
-    setDetailQty(1);
-    setSheet('detail');
-  };
+  const openDetail = (id) => navigate(`/product/${id}`);
   const closeAll = () => setSheet(null);
   const openCart = () => {
     setDrawerKind('cart');
@@ -302,55 +199,11 @@ export default function MarketplaceSection() {
     setSheet('drawer');
   };
   const openCompare = () => setSheet('compare');
-  const openChat = () => setSheet('chat');
 
-  const detailProduct = detailId ? findById(detailId) : null;
-  const cartLines = useMemo(
-    () => cart.map((l) => ({ ...l, product: findById(l.id) })).filter((l) => l.product),
-    [cart, findById],
-  );
-  const wishItems = useMemo(() => wishlist.map((id) => findById(id)).filter(Boolean), [wishlist, findById]);
   const compareProducts = useMemo(() => compare.map((id) => findById(id)).filter(Boolean), [compare, findById]);
-  const cartUnits = cartLines.reduce((n, l) => n + l.qty, 0);
-
-  const checkout = () => {
-    if (!cartLines.length) return;
-
-    // Stock can move (e.g. an admin edit) between adding to cart and checkout — reclamp
-    // against current stock before sending, rather than trusting whatever was cached at
-    // add-to-cart time.
-    const adjustedNames = [];
-    const validLines = [];
-    cartLines.forEach((l) => {
-      const stock = l.product.stock;
-      if (stock <= 0) {
-        adjustedNames.push(l.product.name);
-        return;
-      }
-      const qty = Math.min(l.qty, stock);
-      if (qty !== l.qty) adjustedNames.push(l.product.name);
-      validLines.push({ id: l.id, qty });
-    });
-    if (adjustedNames.length) {
-      setCart(validLines);
-      showToast(`Stock changed for ${adjustedNames.join(', ')} — cart updated, please review and send again.`);
-      return;
-    }
-
-    const cartTotal = cartLines.reduce((sum, l) => sum + l.product.price * l.qty, 0);
-    const lines = cartLines.map((l) => `• ${l.product.name} × ${l.qty} = ${fmtPKR(l.product.price * l.qty)}`);
-    const msg =
-      'Assalam o Alaikum, I would like to order:\n' +
-      lines.join('\n') +
-      '\nSubtotal: ' +
-      fmtPKR(cartTotal) +
-      '\nPlease confirm availability and installation cost.';
-    window.open(waLink(WHATSAPP_NUMBER, msg), '_blank');
-    showToast('Order sent — we reply within a few hours');
-  };
 
   return (
-    <section id="products" aria-labelledby="mk-h" ref={sectionRef} className="px-5 py-[clamp(64px,8vw,110px)]">
+    <section id="products" aria-labelledby="mk-h" className="px-5 py-[clamp(64px,8vw,110px)]">
       <div className="mx-auto max-w-[1200px]">
         <div className="mb-6 flex flex-wrap items-end justify-between gap-5">
           <div>
@@ -563,7 +416,7 @@ export default function MarketplaceSection() {
               >
                 <Bi en="Clear filters" ur="فلٹر ہٹائیں" />
               </button>
-              <a href="#quote" className="rounded-full bg-ink px-5 py-3.5 text-[14.5px] font-[650] text-paper">
+              <a href="/#quote" className="rounded-full bg-ink px-5 py-3.5 text-[14.5px] font-[650] text-paper">
                 <Bi en="Request it" ur="درخواست کریں" />
               </a>
             </span>
@@ -580,21 +433,6 @@ export default function MarketplaceSection() {
           />
         )}
       </div>
-
-      <ProductDetailSheet
-        product={detailProduct}
-        open={sheet === 'detail' && !!detailProduct}
-        onClose={closeAll}
-        selectedImg={detailImg}
-        onSelectImg={setDetailImg}
-        qty={detailQty}
-        onQtyChange={setDetailQty}
-        onAddToCart={() => {
-          if (detailId) addToCart(detailId, detailQty || 1);
-          closeAll();
-        }}
-        onOpenChat={openChat}
-      />
 
       <CartDrawer
         open={sheet === 'drawer'}
@@ -617,8 +455,6 @@ export default function MarketplaceSection() {
       />
 
       <CompareModal open={sheet === 'compare'} onClose={closeAll} products={compareProducts} onRemove={toggleCompare} />
-
-      <ChatPanel open={sheet === 'chat'} onClose={closeAll} product={detailProduct} />
     </section>
   );
 }

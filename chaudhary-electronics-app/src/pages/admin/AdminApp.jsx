@@ -3,7 +3,6 @@ import '../../lib/adminChartSetup';
 import '../../styles/admin.css';
 import { AdminThemeProvider } from '../../context/admin/AdminThemeContext';
 import { useAdminData } from '../../hooks/admin/useAdminData';
-import { useAuth } from '../../context/AuthContext';
 import AdminLayout from '../../components/admin/layout/AdminLayout';
 import Dashboard from '../../components/admin/dashboard/Dashboard';
 import Appointments from '../../components/admin/pages/Appointments';
@@ -40,23 +39,13 @@ import Profile from '../../components/admin/pages/Profile';
  * Settings, Reports, Dashboard) — none of them read from the mock localStorage
  * store anymore except Settings' Backup tab, which still exports/restores
  * whatever remains in `useAdminData`'s local demo state.
+ *
+ * RBAC (admin/superadmin only) is enforced by <ProtectedRoute> where this is mounted
+ * (see src/App.jsx) rather than in here, so the same guard component is shared with
+ * the Seller Dashboard's /seller/* routes instead of being duplicated per panel.
  */
 export default function AdminApp() {
   const admin = useAdminData();
-  const { user, loading } = useAuth();
-
-  // Real RBAC guard against the backend session (see server/src/middleware/auth.middleware.js) —
-  // the panel itself is otherwise unchanged; this just gates entry to admin/superadmin accounts.
-  if (loading) {
-    return (
-      <div className="grid min-h-screen place-items-center bg-paper text-mut">
-        Checking your session…
-      </div>
-    );
-  }
-  if (!user || !['admin', 'superadmin'].includes(user.role)) {
-    return <Navigate to="/login" replace />;
-  }
 
   return (
     <AdminThemeProvider>

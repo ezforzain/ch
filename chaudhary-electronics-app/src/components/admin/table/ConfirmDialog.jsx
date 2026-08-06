@@ -11,7 +11,7 @@ export default function ConfirmDialog({ open, message, onCancel, onConfirm }) {
       onClose={onCancel}
       align="center"
       labelledBy="confirm-dialog-message"
-      overlayClassName="bg-[rgba(15,14,11,0.28)] backdrop-blur-md"
+      overlayClassName="bg-transparent"
     >
       <div className="animate-admin-modal-in flex w-full max-w-[400px] flex-col gap-4 rounded-[18px] bg-[var(--a-white)] p-[22px] shadow-[0_24px_64px_rgba(0,0,0,0.35)]">
         <div id="confirm-dialog-message" className="text-[14.5px]">

@@ -33,3 +33,20 @@
 .animate-admin-modal-in {
   animation: admin-modal-in 0.22s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
+
+/* Entrance for the right-hand slide-over drawer (ProductFormDrawer) — pairs with
+   Modal.jsx's backdrop fade the same way admin-modal-in does for centered dialogs,
+   just sliding in horizontally instead of scaling. */
+@keyframes admin-drawer-in {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+.animate-admin-drawer-in {
+  animation: admin-drawer-in 0.28s cubic-bezier(0.2, 0.7, 0.2, 1);
+}

@@ -56,7 +56,7 @@ function Cell({ row, col }) {
  * duplicate/archive/delete, appointments get "send reminder"), CSV/Excel
  * export, and (schema.hasCalendar) a List/Calendar toggle.
  */
-export default function CollectionTable({ admin, page: pageProp, schema: schemaProp }) {
+export default function CollectionTable({ admin, page: pageProp, schema: schemaProp, renderModal }) {
   const params = useParams();
   const page = pageProp || params.page;
   const schema = schemaProp || schemas[page];
@@ -374,16 +374,19 @@ export default function CollectionTable({ admin, page: pageProp, schema: schemaP
         </>
       )}
 
-      {modal && (
-        <RecordModal schema={schema} mode={modal.mode} row={modal.row} onClose={() => setModal(null)} onSubmit={handleSubmitModal} />
-      )}
+      {modal &&
+        (renderModal ? (
+          renderModal({ mode: modal.mode, row: modal.row, onClose: () => setModal(null), onSubmit: handleSubmitModal })
+        ) : (
+          <RecordModal schema={schema} mode={modal.mode} row={modal.row} onClose={() => setModal(null)} onSubmit={handleSubmitModal} />
+        ))}
 
       {viewRow && (
         <Modal
           open
           onClose={() => setViewRow(null)}
           align="center"
-          overlayClassName="bg-[rgba(15,14,11,0.28)] backdrop-blur-md"
+          overlayClassName="bg-transparent"
         >
           <div className="animate-admin-modal-in flex w-full max-w-[440px] flex-col gap-3 rounded-[20px] bg-[var(--a-white)] p-6 shadow-[0_24px_64px_rgba(0,0,0,0.35)]">
             {viewImage && <img src={viewImage} alt="" className="h-[180px] w-full rounded-[14px] object-cover" />}

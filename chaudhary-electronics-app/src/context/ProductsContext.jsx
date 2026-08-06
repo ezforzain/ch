@@ -230,12 +230,28 @@ export function ProductsProvider({ children }) {
 
   const findById = useCallback((id) => products.find((p) => p.id === id), [products]);
 
+  // Fallback for direct/deep-link visits to /product/:id — the initial load only fetches
+  // the first 100 products (see loadProducts above), so a product outside that window
+  // wouldn't otherwise be found by findById. Merges the single fetched product into state
+  // rather than replacing it, so it doesn't disturb the rest of the already-loaded list.
+  const fetchProductById = useCallback(async (id) => {
+    try {
+      const res = await api.get(`/products/${id}`);
+      const product = backendToFrontend(res.data);
+      setProducts((list) => (list.some((p) => p.id === id) ? list : [...list, product]));
+      return product;
+    } catch {
+      return null;
+    }
+  }, []);
+
   const value = useMemo(
     () => ({
       products,
       loading,
       categories,
       findById,
+      fetchProductById,
       addProduct,
       editProduct,
       deleteProduct,
@@ -252,6 +268,7 @@ export function ProductsProvider({ children }) {
       loading,
       categories,
       findById,
+      fetchProductById,
       addProduct,
       editProduct,
       deleteProduct,

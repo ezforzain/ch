@@ -1,22 +1,13 @@
 import { Link } from 'react-router-dom';
-import Navbar from '../components/layout/Navbar';
-import Footer from '../components/layout/Footer';
 import Bi from '../components/ui/Bi';
 
 /** Simple static Terms & Conditions page — boilerplate appropriate for a
  * Pakistani solar/electronics business whose checkout is a WhatsApp deep link
- * rather than an on-site payment flow. */
+ * rather than an on-site payment flow. Navbar/Footer now come from PublicLayout
+ * (see App.jsx), not this page. */
 export default function Terms() {
   return (
-    <>
-      <a
-        href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[1300] focus:rounded-full focus:bg-ink focus:px-5 focus:py-3 focus:text-[14.5px] focus:font-semibold focus:text-paper focus:shadow-[0_12px_28px_-8px_rgba(23,21,15,0.55)]"
-      >
-        Skip to content
-      </a>
-      <Navbar />
-      <main id="main-content" className="min-h-screen bg-paper pt-[110px] text-ink">
+    <div className="min-h-screen bg-paper pt-[110px] text-ink">
       <div className="mx-auto flex max-w-[1200px] flex-col gap-8 px-5 pb-[clamp(56px,8vw,96px)]">
         <Link
           to="/"
@@ -85,8 +76,6 @@ export default function Terms() {
           </section>
         </div>
       </div>
-      </main>
-      <Footer />
-    </>
+    </div>
   );
 }

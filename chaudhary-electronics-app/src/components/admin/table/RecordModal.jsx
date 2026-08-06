@@ -108,7 +108,7 @@ export default function RecordModal({ schema, mode, row, onClose, onSubmit }) {
       onClose={onClose}
       align="center"
       labelledBy="record-modal-title"
-      overlayClassName="bg-[rgba(15,14,11,0.28)] backdrop-blur-md"
+      overlayClassName="bg-transparent"
     >
       <div className="animate-admin-modal-in flex max-h-[90vh] w-full max-w-[820px] flex-col overflow-hidden rounded-[22px] bg-[var(--a-white)] shadow-[0_28px_72px_rgba(15,14,11,0.28)]">
         <div className="flex flex-shrink-0 items-center justify-between gap-3 border-b border-[var(--a-line)] px-6 py-5 sm:px-9">

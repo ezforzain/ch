@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import CollectionTable from '../table/CollectionTable';
+import ProductFormDrawer from '../products/ProductFormDrawer';
 import { schemas } from '../../../data/admin/schemas';
 import { useProducts } from '../../../context/ProductsContext';
 
@@ -47,5 +48,14 @@ export default function Products() {
     [store.categories],
   );
 
-  return <CollectionTable admin={adapter} page="products" schema={liveSchema} />;
+  return (
+    <CollectionTable
+      admin={adapter}
+      page="products"
+      schema={liveSchema}
+      renderModal={({ mode, row, onClose, onSubmit }) => (
+        <ProductFormDrawer mode={mode} row={row} categories={store.categories} onClose={onClose} onSubmit={onSubmit} />
+      )}
+    />
+  );
 }

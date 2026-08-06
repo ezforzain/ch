@@ -19,7 +19,7 @@ const COMPACT_DESC = 'mt-[5px] text-[14px] text-[rgba(245,242,236,0.72)]';
 export const services = [
   {
     id: 'solar-installation',
-    href: '#category/solar-panels',
+    href: '/marketplace?category=solar-panels',
     img: 'https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?auto=format&fit=crop&w=1400&q=80',
     fb: 'solar,panels',
     alt: 'Solar array',
@@ -38,7 +38,7 @@ export const services = [
   },
   {
     id: 'backup-ups',
-    href: '#category/batteries',
+    href: '/marketplace?category=batteries',
     img: 'https://images.unsplash.com/photo-1621905251918-48416bd8575a?auto=format&fit=crop&w=900&q=80',
     fb: 'battery,energy,storage',
     alt: 'Battery storage',
@@ -55,7 +55,7 @@ export const services = [
   },
   {
     id: 'wiring-rewiring',
-    href: '#category/wires-cables',
+    href: '/marketplace?category=wires-cables',
     img: 'https://images.unsplash.com/photo-1621905251918-48416bd8575a?auto=format&fit=crop&w=900&q=80',
     fb: 'electrical,wiring',
     alt: 'Electrical wiring',
@@ -72,7 +72,7 @@ export const services = [
   },
   {
     id: 'cctv-security',
-    href: '#category/tools-accessories',
+    href: '/marketplace?category=tools-accessories',
     img: 'https://images.unsplash.com/photo-1557597774-9d273605dfa9?auto=format&fit=crop&w=900&q=80',
     fb: 'cctv,security,camera',
     alt: 'Security camera',

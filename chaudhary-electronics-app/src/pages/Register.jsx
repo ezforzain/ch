@@ -18,7 +18,7 @@ import {
 import { useLang } from '../i18n/LangContext';
 import { useToast } from '../context/ToastContext';
 import { useAuth, ApiRequestError, redirectPathForRole } from '../context/AuthContext';
-import AuthSplitShell from '../components/auth/AuthSplitShell';
+import AuthShell from '../components/auth/AuthShell';
 import Bi from '../components/ui/Bi';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -237,7 +237,7 @@ export default function Register() {
   }
 
   return (
-    <AuthSplitShell>
+    <AuthShell variant="split">
       <div className="mb-6">
         <Bi
           as="h1"
@@ -594,6 +594,6 @@ export default function Register() {
           </div>
         </div>
       )}
-    </AuthSplitShell>
+    </AuthShell>
   );
 }

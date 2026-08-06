@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useLang } from '../../i18n/LangContext';
 import { imgFallback } from '../../lib/format';
 import { services } from '../../data/services';
@@ -37,9 +38,9 @@ export default function Services() {
 
         <div className="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-[14px]">
           {services.map((s) => (
-            <a
+            <Link
               key={s.id}
-              href={s.href}
+              to={s.href}
               className={`group relative flex flex-col justify-end overflow-hidden rounded-[26px] text-paper transition-transform duration-500 ease-[cubic-bezier(0.2,0.7,0.2,1)] hover:-translate-y-[6px] ${
                 s.span === 2 ? 'col-span-2 p-[26px]' : 'p-[22px]'
               } ${s.shadow ? 'shadow-[0_26px_60px_-32px_rgba(23,21,15,0.5)]' : ''}`}
@@ -71,7 +72,7 @@ export default function Services() {
                   Learn more <span aria-hidden="true">→</span>
                 </span>
               </div>
-            </a>
+            </Link>
           ))}
         </div>
 
