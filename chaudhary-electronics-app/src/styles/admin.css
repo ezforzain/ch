@@ -15,3 +15,21 @@
 .animate-admin-drop-in {
   animation: admin-drop-in 0.15s ease-out;
 }
+
+/* Entrance for admin dialogs (RecordModal, ConfirmDialog, view/reply modals) — pairs
+   with Modal.jsx's backdrop fade so opening a dialog animates as one smooth motion.
+   Exit is covered by the backdrop's own fade-out (see Modal.jsx); the panel itself
+   doesn't need a separate exit animation since it disappears together with it. */
+@keyframes admin-modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.animate-admin-modal-in {
+  animation: admin-modal-in 0.22s cubic-bezier(0.2, 0.7, 0.2, 1);
+}

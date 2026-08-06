@@ -1,24 +1,57 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 const FOCUSABLE_SELECTOR =
   'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+const DEFAULT_OVERLAY_CLASS = 'bg-[rgba(15,14,11,0.6)] backdrop-blur-sm';
+const TRANSITION_MS = 200;
 
 /** Generic overlay shell shared by the product detail sheet, cart/wishlist drawer,
- * compare table, chat panel and lightbox. Closes on Escape or backdrop click.
- * Also owns the dialog's a11y contract (role/aria-modal/aria-labelledby live
- * here only — consumers must not re-declare role="dialog" on their inner
- * markup) plus a focus trap: focus moves into the dialog on open, Tab/Shift+Tab
- * cycles within it, and focus returns to whatever triggered it on close. */
-export default function Modal({ open, onClose, children, align = 'center', labelledBy, ariaLabel }) {
+ * compare table, chat panel, lightbox and every admin-panel dialog. Closes on Escape
+ * or backdrop click. Also owns the dialog's a11y contract (role/aria-modal/
+ * aria-labelledby live here only — consumers must not re-declare role="dialog" on
+ * their inner markup) plus a focus trap: focus moves into the dialog on open,
+ * Tab/Shift+Tab cycles within it, and focus returns to whatever triggered it on close.
+ *
+ * The backdrop fades in/out smoothly (stays mounted through its exit transition
+ * instead of vanishing instantly) — `overlayClassName` lets a consumer swap the
+ * default heavy dark/blur backdrop for a lighter one (e.g. admin dialogs, where a
+ * near-opaque backdrop hides too much of the panel behind it) without affecting
+ * every other Modal consumer's default look. */
+export default function Modal({ open, onClose, children, align = 'center', labelledBy, ariaLabel, overlayClassName }) {
   const panelRef = useRef(null);
   const previouslyFocused = useRef(null);
+  const [mounted, setMounted] = useState(open);
+  const [visible, setVisible] = useState(false);
+  const unmountTimer = useRef(null);
+
+  // Keeps the backdrop mounted for the duration of its fade-out so closing animates
+  // instead of vanishing instantly; mirrors the pattern of a proper exit transition
+  // without pulling in an animation library for one component.
+  useEffect(() => {
+    if (open) {
+      clearTimeout(unmountTimer.current);
+      setMounted(true);
+      const raf = requestAnimationFrame(() => setVisible(true));
+      return () => cancelAnimationFrame(raf);
+    }
+    setVisible(false);
+    unmountTimer.current = setTimeout(() => setMounted(false), TRANSITION_MS);
+    return () => clearTimeout(unmountTimer.current);
+  }, [open]);
+
+  useEffect(() => {
+    if (!mounted) return undefined;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [mounted]);
 
   useEffect(() => {
     if (!open) return undefined;
 
     previouslyFocused.current = document.activeElement;
-    document.body.style.overflow = 'hidden';
 
     const focusTimer = setTimeout(() => {
       const root = panelRef.current;
@@ -50,13 +83,12 @@ export default function Modal({ open, onClose, children, align = 'center', label
 
     return () => {
       document.removeEventListener('keydown', onKey);
-      document.body.style.overflow = '';
       clearTimeout(focusTimer);
       previouslyFocused.current?.focus?.();
     };
   }, [open, onClose]);
 
-  if (!open) return null;
+  if (!mounted) return null;
 
   const alignClass =
     align === 'right'
@@ -69,7 +101,7 @@ export default function Modal({ open, onClose, children, align = 'center', label
     <div
       ref={panelRef}
       tabIndex={-1}
-      className={`fixed inset-0 z-[1200] flex ${alignClass} bg-[rgba(15,14,11,0.6)] p-0 backdrop-blur-sm outline-none sm:p-5`}
+      className={`fixed inset-0 z-[1200] flex ${alignClass} ${overlayClassName || DEFAULT_OVERLAY_CLASS} p-0 outline-none transition-opacity duration-200 ease-out sm:p-5 ${visible ? 'opacity-100' : 'opacity-0'}`}
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}

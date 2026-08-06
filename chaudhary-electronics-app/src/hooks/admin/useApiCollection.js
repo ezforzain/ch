@@ -104,9 +104,12 @@ export function useApiCollection({
       try {
         const { body, isForm } = await buildPayload(draft);
         const res = await api.patch(`${endpoint}/${draft.id}`, body, { isForm });
-        setRows((r) => r.map((row) => (row.id === draft.id ? mapFromApi(res.data) : row)));
+        const updated = mapFromApi(res.data);
+        setRows((r) => r.map((row) => (row.id === draft.id ? updated : row)));
+        return updated;
       } catch (err) {
         showToast(err.message || 'Could not update record.');
+        return null;
       }
     },
     [buildPayload, endpoint, mapFromApi, showToast],

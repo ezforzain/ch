@@ -193,8 +193,13 @@ export default function Messages() {
       </div>
 
       {viewRow && (
-        <Modal open onClose={() => setViewRow(null)} align="center">
-          <div className="flex w-full max-w-[460px] flex-col gap-3 rounded-[20px] bg-[var(--a-white)] p-6 shadow-[0_24px_64px_rgba(0,0,0,0.35)]">
+        <Modal
+          open
+          onClose={() => setViewRow(null)}
+          align="center"
+          overlayClassName="bg-[rgba(15,14,11,0.28)] backdrop-blur-md"
+        >
+          <div className="animate-admin-modal-in flex w-full max-w-[460px] flex-col gap-3 rounded-[20px] bg-[var(--a-white)] p-6 shadow-[0_24px_64px_rgba(0,0,0,0.35)]">
             <div className="text-base font-bold">{viewRow.subject || 'General inquiry'}</div>
             <div className="text-[12.5px] text-[var(--a-mut)]">
               From {viewRow.name} ({viewRow.email || viewRow.phone || 'no contact given'}) ·{' '}
@@ -215,8 +220,14 @@ export default function Messages() {
       )}
 
       {replyRow && (
-        <Modal open onClose={() => setReplyRow(null)} align="center" labelledBy="reply-modal-title">
-          <div className="flex w-full max-w-[460px] flex-col gap-3 rounded-[20px] bg-[var(--a-white)] p-6 shadow-[0_24px_64px_rgba(0,0,0,0.35)]">
+        <Modal
+          open
+          onClose={() => setReplyRow(null)}
+          align="center"
+          labelledBy="reply-modal-title"
+          overlayClassName="bg-[rgba(15,14,11,0.28)] backdrop-blur-md"
+        >
+          <div className="animate-admin-modal-in flex w-full max-w-[460px] flex-col gap-3 rounded-[20px] bg-[var(--a-white)] p-6 shadow-[0_24px_64px_rgba(0,0,0,0.35)]">
             <div id="reply-modal-title" className="text-base font-bold">
               Reply to {replyRow.name}
             </div>

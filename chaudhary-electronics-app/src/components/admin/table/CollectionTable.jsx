@@ -85,14 +85,20 @@ export default function CollectionTable({ admin, page: pageProp, schema: schemaP
     setConfirm(null);
   }
 
-  function handleSubmitModal(draft) {
+  // Returns whether the save actually succeeded — RecordModal only closes itself and
+  // clears its "saving" state once this resolves true; on failure it stays open (with an
+  // inline error) so the admin can fix the fields and retry, instead of silently discarding
+  // their edits. The underlying admin.addRecord/editRecord already toast the specific
+  // server error on failure (see useApiCollection.js / ProductsContext.jsx).
+  async function handleSubmitModal(draft) {
     if (modal.mode === 'add') {
-      admin.addRecord(page, draft);
-      showToast('Record added.');
-    } else {
-      admin.editRecord(page, draft);
-      showToast('Record updated.');
+      const result = await admin.addRecord(page, draft);
+      if (result) showToast('Record added.');
+      return !!result;
     }
+    const result = await admin.editRecord(page, draft);
+    if (result) showToast('Record updated.');
+    return !!result;
   }
 
   function onDelete(row) {
@@ -373,8 +379,13 @@ export default function CollectionTable({ admin, page: pageProp, schema: schemaP
       )}
 
       {viewRow && (
-        <Modal open onClose={() => setViewRow(null)} align="center">
-          <div className="flex w-full max-w-[440px] flex-col gap-3 rounded-[20px] bg-[var(--a-white)] p-6 shadow-[0_24px_64px_rgba(0,0,0,0.35)]">
+        <Modal
+          open
+          onClose={() => setViewRow(null)}
+          align="center"
+          overlayClassName="bg-[rgba(15,14,11,0.28)] backdrop-blur-md"
+        >
+          <div className="animate-admin-modal-in flex w-full max-w-[440px] flex-col gap-3 rounded-[20px] bg-[var(--a-white)] p-6 shadow-[0_24px_64px_rgba(0,0,0,0.35)]">
             {viewImage && <img src={viewImage} alt="" className="h-[180px] w-full rounded-[14px] object-cover" />}
             {viewSchemaColumns.map((c) => (
               <div key={c.key} className="flex justify-between border-t border-[var(--a-line)] py-1.5 text-[13px]">

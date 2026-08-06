@@ -41,7 +41,11 @@ export const createProduct = asyncHandler(async (req, res) => {
     payload.seller = req.user._id;
   } // admins may set `seller` explicitly in the body (or omit it for first-party stock)
 
-  const product = await Product.create(payload);
+  const created = await Product.create(payload);
+  const product = await created.populate([
+    { path: 'category', select: 'name slug' },
+    { path: 'seller', select: 'name sellerProfile.businessName' },
+  ]);
   sendResponse(res, 201, 'Product created.', product);
 });
 
@@ -64,6 +68,10 @@ export const updateProduct = asyncHandler(async (req, res) => {
 
   Object.assign(product, payload);
   await product.save();
+  await product.populate([
+    { path: 'category', select: 'name slug' },
+    { path: 'seller', select: 'name sellerProfile.businessName' },
+  ]);
   sendResponse(res, 200, 'Product updated.', product);
 });
 
