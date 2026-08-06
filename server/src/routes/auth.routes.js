@@ -8,6 +8,7 @@ import {
   forgotPasswordValidator,
   resetPasswordValidator,
   updatePasswordValidator,
+  googleAuthValidator,
 } from '../validators/auth.validator.js';
 import { authLimiter } from '../middleware/rateLimit.middleware.js';
 
@@ -15,6 +16,7 @@ const router = Router();
 
 router.post('/register', authLimiter, registerValidator, validate, authController.register);
 router.post('/login', authLimiter, loginValidator, validate, authController.login);
+router.post('/google', authLimiter, googleAuthValidator, validate, authController.googleAuth);
 router.post('/logout', authController.logout);
 router.post('/refresh', authController.refresh);
 router.post('/forgot-password', authLimiter, forgotPasswordValidator, validate, authController.forgotPassword);

@@ -46,6 +46,10 @@ const userSchema = new mongoose.Schema(
       sparse: true, // allows many docs with no phone while still enforcing uniqueness when present
     },
     password: { type: String, required: true, minlength: 6, select: false },
+    // Set only for accounts created/linked via "Sign in with Google" (stores Google's
+    // stable per-user `sub` claim). sparse so the unique index ignores the many docs
+    // that don't have one (regular email/password accounts).
+    googleId: { type: String, unique: true, sparse: true, select: false },
     avatar: {
       url: { type: String, default: '' },
       publicId: { type: String, default: '' },

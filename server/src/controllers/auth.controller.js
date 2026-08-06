@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 import asyncHandler from 'express-async-handler';
+import { OAuth2Client } from 'google-auth-library';
 import { User } from '../models/User.js';
 import { ApiError } from '../utils/ApiError.js';
 import { sendResponse } from '../utils/sendResponse.js';
@@ -7,6 +8,11 @@ import { issueTokenPair, signAccessToken, verifyRefreshToken } from '../utils/ge
 import { sendEmail } from '../utils/sendEmail.js';
 import { env } from '../config/env.js';
 import { createNotification } from './notification.controller.js';
+
+// Only constructed when GOOGLE_CLIENT_ID is actually set — see googleAuth() below, which
+// gives a clear "not configured" error rather than crashing the server at boot when it's
+// left blank (the default, since it requires the operator's own Google Cloud OAuth app).
+const googleClient = env.useGoogleAuth ? new OAuth2Client(env.googleClientId) : null;
 
 // @route  POST /api/v1/auth/register
 // @access Public
@@ -37,6 +43,63 @@ export const register = asyncHandler(async (req, res) => {
 
   const accessToken = issueTokenPair(res, user);
   sendResponse(res, 201, 'Account created successfully.', { user: user.toSafeJSON(), accessToken });
+});
+
+// @route  POST /api/v1/auth/google
+// @access Public
+// Frontend flow: Google Identity Services renders the real Google button and hands back a
+// signed ID token (a JWT from Google, NOT one of ours) — we verify it here rather than
+// trusting anything the client asserts about who they are. No Client Secret is involved;
+// verifyIdToken checks the token's signature against Google's public keys and confirms
+// `aud` matches our Client ID, which is all this flow needs.
+export const googleAuth = asyncHandler(async (req, res) => {
+  if (!googleClient) {
+    throw ApiError.internal('Google sign-in is not configured on this server yet.');
+  }
+
+  const { credential } = req.body;
+  let payload;
+  try {
+    const ticket = await googleClient.verifyIdToken({ idToken: credential, audience: env.googleClientId });
+    payload = ticket.getPayload();
+  } catch {
+    throw ApiError.unauthorized('Could not verify your Google account. Please try again.');
+  }
+
+  if (!payload?.email) throw ApiError.badRequest('Your Google account has no email address to sign in with.');
+  if (payload.email_verified === false) {
+    throw ApiError.forbidden('Please verify your email address with Google first, then try again.');
+  }
+
+  // Match by googleId first (repeat sign-ins), falling back to email — a returning user who
+  // originally registered with a password and later clicks "Continue with Google" using the
+  // same, Google-verified email address is the same account, not a conflict.
+  let user = await User.findOne({ $or: [{ googleId: payload.sub }, { email: payload.email.toLowerCase() }] });
+
+  if (user) {
+    if (!user.isActive) throw ApiError.forbidden('Your account has been deactivated. Contact an administrator.');
+    if (!user.googleId) {
+      user.googleId = payload.sub;
+      await user.save({ validateBeforeSave: false });
+    }
+  } else {
+    user = await User.create({
+      name: payload.name || payload.email.split('@')[0],
+      email: payload.email,
+      googleId: payload.sub,
+      isEmailVerified: true,
+      // Required by the schema but never used to log in directly — this account can only
+      // sign in via Google unless its owner later sets a real password via "Forgot password".
+      password: crypto.randomBytes(32).toString('hex'),
+      avatar: payload.picture ? { url: payload.picture, publicId: '' } : undefined,
+    });
+  }
+
+  user.lastLoginAt = new Date();
+  await user.save({ validateBeforeSave: false });
+
+  const accessToken = issueTokenPair(res, user);
+  sendResponse(res, 200, 'Signed in with Google.', { user: user.toSafeJSON(), accessToken });
 });
 
 // @route  POST /api/v1/auth/login

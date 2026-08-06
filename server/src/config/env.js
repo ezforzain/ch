@@ -26,6 +26,15 @@ export const env = {
   jwtAccessExpiresIn: process.env.JWT_ACCESS_EXPIRES_IN || '15m',
   jwtRefreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '30d',
 
+  // "Sign in with Google" verifies an ID token client-side obtained via Google Identity
+  // Services — only the OAuth Client ID is needed here (it's not secret, just identifies
+  // the app; it's the same value the frontend uses as VITE_GOOGLE_CLIENT_ID). No Client
+  // Secret is involved anywhere in this flow.
+  googleClientId: process.env.GOOGLE_CLIENT_ID || '',
+  get useGoogleAuth() {
+    return Boolean(this.googleClientId);
+  },
+
   cloudinary: {
     cloudName: process.env.CLOUDINARY_CLOUD_NAME || '',
     apiKey: process.env.CLOUDINARY_API_KEY || '',

@@ -55,6 +55,16 @@ export function AuthProvider({ children }) {
     return res.data.user;
   }, []);
 
+  // `idToken` is the credential Google Identity Services hands back after the user picks
+  // an account — a JWT signed BY GOOGLE, not one of ours. The backend verifies it and
+  // finds-or-creates the matching account (see server/src/controllers/auth.controller.js).
+  const loginWithGoogle = useCallback(async (idToken) => {
+    const res = await api.post('/auth/google', { credential: idToken });
+    setAccessToken(res.data.accessToken);
+    setUser(res.data.user);
+    return res.data.user;
+  }, []);
+
   const logout = useCallback(async () => {
     try {
       await api.post('/auth/logout');
@@ -71,8 +81,8 @@ export function AuthProvider({ children }) {
   }, []);
 
   const value = useMemo(
-    () => ({ user, loading, isAuthenticated: !!user, login, register, logout, refreshMe }),
-    [user, loading, login, register, logout, refreshMe],
+    () => ({ user, loading, isAuthenticated: !!user, login, loginWithGoogle, register, logout, refreshMe }),
+    [user, loading, login, loginWithGoogle, register, logout, refreshMe],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

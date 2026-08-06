@@ -5,6 +5,7 @@ import { useLang } from '../i18n/LangContext';
 import { useToast } from '../context/ToastContext';
 import { useAuth, ApiRequestError, redirectPathForRole } from '../context/AuthContext';
 import AuthShell from '../components/auth/AuthShell';
+import GoogleSignInButton, { isGoogleSignInConfigured } from '../components/auth/GoogleSignInButton';
 import Bi from '../components/ui/Bi';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -28,15 +29,16 @@ function GoogleGlyph() {
 /**
  * Standalone, minimal login route — no full site chrome (Navbar/Footer) so the
  * form stays the sole focus, a common pattern for auth pages. Sign-in calls the
- * real backend (server/src/controllers/auth.controller.js). Google stays a
- * "coming soon" placeholder — there's no OAuth app wired up yet, so pretending
- * it works would be dishonest. "Create account" links to the real /register page.
+ * real backend (server/src/controllers/auth.controller.js). "Continue with Google" is
+ * real too when VITE_GOOGLE_CLIENT_ID is configured (see GoogleSignInButton.jsx) — it
+ * falls back to a "coming soon" placeholder when it isn't, rather than pretending to
+ * work. "Create account" links to the real /register page.
  */
 export default function Login() {
   const { lang } = useLang();
   const showToast = useToast();
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
 
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
@@ -109,6 +111,30 @@ export default function Login() {
     } catch (err) {
       // Never surface raw fetch/CORS/network errors — only the friendly server
       // message (ApiRequestError) or a generic fallback ever reaches the user.
+      const message =
+        err instanceof ApiRequestError
+          ? err.message
+          : lang === 'ur'
+            ? 'سرور سے رابطہ نہیں ہو سکا۔ دوبارہ کوشش کریں۔'
+            : 'Could not reach the server. Please try again.';
+      setFormError(message);
+      showToast(message);
+      setSubmitting(false);
+    }
+  }
+
+  async function handleGoogleCredential(idToken) {
+    if (submitting || success) return;
+    setFormError('');
+    setSubmitting(true);
+    try {
+      const user = await loginWithGoogle(idToken);
+      setSuccess(true);
+      showToast(lang === 'ur' ? 'خوش آمدید! سائن ان کامیاب رہا۔' : 'Welcome back — signed in successfully.');
+      redirectTimer.current = setTimeout(() => {
+        navigate(redirectPathForRole(user.role));
+      }, SUCCESS_REDIRECT_DELAY_MS);
+    } catch (err) {
       const message =
         err instanceof ApiRequestError
           ? err.message
@@ -261,17 +287,21 @@ export default function Login() {
       </div>
 
       <div className="flex flex-col gap-3">
-        <Button
-          type="button"
-          variant="outline"
-          size="lg"
-          className="w-full"
-          disabled={busy}
-          onClick={() => comingSoon('Google sign-in — coming soon', 'گوگل سائن ان جلد آرہا ہے')}
-        >
-          <GoogleGlyph />
-          <Bi en="Continue with Google" ur="گوگل سے جاری رکھیں" />
-        </Button>
+        {isGoogleSignInConfigured ? (
+          <GoogleSignInButton onCredential={handleGoogleCredential} onError={setFormError} disabled={busy} />
+        ) : (
+          <Button
+            type="button"
+            variant="outline"
+            size="lg"
+            className="w-full"
+            disabled={busy}
+            onClick={() => comingSoon('Google sign-in — coming soon', 'گوگل سائن ان جلد آرہا ہے')}
+          >
+            <GoogleGlyph />
+            <Bi en="Continue with Google" ur="گوگل سے جاری رکھیں" />
+          </Button>
+        )}
       </div>
 
       <p className="mt-7 text-center text-[14px] text-mut dark:text-[rgba(245,242,236,0.55)]">
