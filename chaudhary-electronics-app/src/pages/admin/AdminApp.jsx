@@ -8,6 +8,7 @@ import AdminLayout from '../../components/admin/layout/AdminLayout';
 import Dashboard from '../../components/admin/dashboard/Dashboard';
 import Appointments from '../../components/admin/pages/Appointments';
 import Products from '../../components/admin/pages/Products';
+import Categories from '../../components/admin/pages/Categories';
 import Sellers from '../../components/admin/pages/Sellers';
 import UsersRoles from '../../components/admin/pages/UsersRoles';
 import Gallery from '../../components/admin/pages/Gallery';
@@ -19,6 +20,7 @@ import Services from '../../components/admin/pages/Services';
 import ProjectsPage from '../../components/admin/pages/ProjectsPage';
 import Orders from '../../components/admin/pages/Orders';
 import Messages from '../../components/admin/pages/Messages';
+import Notifications from '../../components/admin/pages/Notifications';
 import Blog from '../../components/admin/pages/Blog';
 import Testimonials from '../../components/admin/pages/Testimonials';
 import Team from '../../components/admin/pages/Team';
@@ -65,11 +67,13 @@ export default function AdminApp() {
           <Route path="customers" element={<Customers />} />
           <Route path="services" element={<Services />} />
           <Route path="products" element={<Products />} />
+          <Route path="categories" element={<Categories />} />
           <Route path="sellers" element={<Sellers />} />
           <Route path="projects" element={<ProjectsPage />} />
           <Route path="orders" element={<Orders />} />
           <Route path="appointments" element={<Appointments />} />
           <Route path="messages" element={<Messages />} />
+          <Route path="notifications" element={<Notifications />} />
           <Route path="blog" element={<Blog />} />
           <Route path="gallery" element={<Gallery />} />
           <Route path="testimonials" element={<Testimonials />} />

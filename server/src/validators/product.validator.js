@@ -12,4 +12,5 @@ export const productValidator = [
   body('tag').optional().trim(),
   body('unit').optional().trim(),
   body('status').optional().isIn(['active', 'draft', 'archived']),
+  body('isFeatured').optional().isBoolean(),
 ];

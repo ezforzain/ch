@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useToast } from '../../../context/ToastContext';
 import { useAdminTheme } from '../../../context/admin/AdminThemeContext';
 import { useAuth } from '../../../context/AuthContext';
+import { useHeaderCounts } from '../../../hooks/admin/useHeaderCounts';
 import { navDefs } from '../../../data/admin/navDefs';
 
 const iconBtnClass =
@@ -27,12 +28,20 @@ function usePageKey() {
   }, [pathname]);
 }
 
-export default function Header({ admin }) {
+export default function Header() {
   const navigate = useNavigate();
   const showToast = useToast();
   const { theme, toggleTheme } = useAdminTheme();
   const { user, logout } = useAuth();
   const pageKey = usePageKey();
+  const {
+    newLeadsCount,
+    unreadMessagesCount,
+    pendingOrdersCount,
+    unreadNotificationsCount,
+    recentMessages,
+    recentNotifications,
+  } = useHeaderCounts();
 
   async function handleLogout() {
     await logout();
@@ -53,19 +62,10 @@ export default function Header({ admin }) {
   const toggleDropdown = (name) => setDropdown((d) => (d === name ? null : name));
   const closeDropdowns = () => setDropdown(null);
 
-  const { leads, orders, messages } = admin.data;
-  const newLeadsCount = leads.filter((l) => l.status === 'New').length;
-  const unreadMsgCount = messages.filter((m) => m.status === 'Unread').length;
-  const pendingOrders = orders.filter((o) => o.status === 'Pending').length;
-
-  const notifItems = [
+  const summaryItems = [
     newLeadsCount > 0 && { text: `${newLeadsCount} new lead(s) today` },
-    unreadMsgCount > 0 && { text: `${unreadMsgCount} unread message(s)` },
-    pendingOrders > 0 && { text: `${pendingOrders} order(s) pending payment` },
+    pendingOrdersCount > 0 && { text: `${pendingOrdersCount} order(s) pending` },
   ].filter(Boolean);
-  if (!notifItems.length) notifItems.push({ text: "You're all caught up." });
-  const hasNotifBadge = notifItems.length > 0 && notifItems[0].text !== "You're all caught up.";
-  const notifCount = newLeadsCount + unreadMsgCount + pendingOrders;
 
   function globalSearchSubmit(e) {
     if (e.key !== 'Enter') return;
@@ -120,20 +120,39 @@ export default function Header({ admin }) {
             className={`${iconBtnClass} relative`}
           >
             ◔
-            {hasNotifBadge && (
+            {unreadNotificationsCount > 0 && (
               <span className="absolute -right-1 -top-1 grid h-4 min-w-[16px] place-items-center rounded-lg bg-[var(--a-danger)] px-[3px] text-[9.5px] font-bold text-white">
-                {notifCount}
+                {unreadNotificationsCount}
               </span>
             )}
           </button>
           {dropdown === 'notif' && (
             <div role="menu" aria-label="Notifications" className={dropdownClass}>
               <div className="p-1 pb-2 text-[13px] font-bold">Notifications</div>
-              {notifItems.map((n, i) => (
+              {summaryItems.map((n, i) => (
                 <div key={i} className="border-t border-[var(--a-line)] p-[9px] px-1.5 text-[13px]">
                   {n.text}
                 </div>
               ))}
+              {recentNotifications.length === 0 && summaryItems.length === 0 && (
+                <div className="border-t border-[var(--a-line)] p-[9px] px-1.5 text-[13px]">You're all caught up.</div>
+              )}
+              {recentNotifications.slice(0, 4).map((n) => (
+                <div key={n._id} className="border-t border-[var(--a-line)] p-[9px] px-1.5">
+                  <div className="text-[13px] font-semibold">{n.title}</div>
+                  <div className="text-[12.5px] text-[var(--a-mut)]">{n.message}</div>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() => {
+                  navigate('/admin/notifications');
+                  closeDropdowns();
+                }}
+                className="mt-2 h-[34px] w-full cursor-pointer rounded-lg border-none bg-[var(--a-ink)] text-[12.5px] font-semibold text-[var(--a-white)]"
+              >
+                View all
+              </button>
             </div>
           )}
         </div>
@@ -148,19 +167,22 @@ export default function Header({ admin }) {
             className={`${iconBtnClass} relative`}
           >
             ✉
-            {unreadMsgCount > 0 && (
+            {unreadMessagesCount > 0 && (
               <span className="absolute -right-1 -top-1 grid h-4 min-w-[16px] place-items-center rounded-lg bg-[var(--a-danger)] px-[3px] text-[9.5px] font-bold text-white">
-                {unreadMsgCount}
+                {unreadMessagesCount}
               </span>
             )}
           </button>
           {dropdown === 'messages' && (
             <div role="menu" aria-label="Messages" className={dropdownClass}>
               <div className="p-1 pb-2 text-[13px] font-bold">Recent messages</div>
-              {messages.slice(0, 3).map((m) => (
-                <div key={m.id} className="border-t border-[var(--a-line)] p-[9px] px-1.5">
+              {recentMessages.length === 0 && (
+                <div className="border-t border-[var(--a-line)] p-[9px] px-1.5 text-[13px] text-[var(--a-mut)]">No messages yet.</div>
+              )}
+              {recentMessages.slice(0, 3).map((m) => (
+                <div key={m._id} className="border-t border-[var(--a-line)] p-[9px] px-1.5">
                   <div className="text-[13px] font-semibold">{m.name}</div>
-                  <div className="text-[12.5px] text-[var(--a-mut)]">{m.preview}</div>
+                  <div className="text-[12.5px] text-[var(--a-mut)]">{m.body}</div>
                 </div>
               ))}
               <button

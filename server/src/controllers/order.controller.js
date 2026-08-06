@@ -6,6 +6,11 @@ import { sendResponse } from '../utils/sendResponse.js';
 import { APIFeatures } from '../utils/APIFeatures.js';
 import { createNotification } from './notification.controller.js';
 
+// Matches the "low stock" threshold Product.countDocuments uses for the dashboard's
+// low-stock stat card (server/src/controllers/dashboard.controller.js) — kept in sync
+// so an admin's low-stock notification and the dashboard count agree on what "low" means.
+const LOW_STOCK_THRESHOLD = 10;
+
 // @route  POST /api/v1/orders
 // @access Private (customer)
 export const createOrder = asyncHandler(async (req, res) => {
@@ -35,6 +40,19 @@ export const createOrder = asyncHandler(async (req, res) => {
     product.stock -= qty;
     product.popularity += qty;
     await product.save({ validateBeforeSave: false });
+
+    if (product.stock <= LOW_STOCK_THRESHOLD) {
+      await createNotification({
+        role: 'admin',
+        type: 'system',
+        title: product.stock === 0 ? 'Product out of stock' : 'Low stock alert',
+        message:
+          product.stock === 0
+            ? `"${product.name}" is now out of stock.`
+            : `"${product.name}" is low on stock — only ${product.stock} left.`,
+        link: `/admin/products`,
+      });
+    }
   }
 
   const order = await Order.create({

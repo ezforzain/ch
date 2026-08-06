@@ -3,7 +3,7 @@ import Bi from '../ui/Bi';
 import { useToast } from '../../context/ToastContext';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
 import { fmtPKR, waLink } from '../../lib/format';
-import { CATEGORIES, slugifyCategory } from '../../data/catalogue';
+import { slugifyCategory } from '../../data/catalogue';
 import { useProducts } from '../../context/ProductsContext';
 import ProductCard from './ProductCard';
 import ProductDetailSheet from './ProductDetailSheet';
@@ -74,7 +74,11 @@ function matchesFilters(p, category, tokens, brand, minPrice, maxPrice) {
 export default function MarketplaceSection() {
   const showToast = useToast();
   const sectionRef = useRef(null);
-  const { products: CATALOGUE, findById } = useProducts();
+  const { products: CATALOGUE, categories: liveCategories, findById } = useProducts();
+
+  // Real categories now come from the database (ProductsContext), not a hardcoded list —
+  // 'All' is a UI-only pseudo-category prepended for the filter chips/select.
+  const CATEGORIES = useMemo(() => ['All', ...liveCategories.map((c) => c.name)], [liveCategories]);
 
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState('popular');
@@ -129,7 +133,7 @@ export default function MarketplaceSection() {
     if (!m) return null;
     const want = decodeURIComponent(m[1]).toLowerCase();
     return CATEGORIES.find((c) => slugifyCategory(c) === want) || null;
-  }, []);
+  }, [CATEGORIES]);
 
   const routeFromHash = useCallback(
     (smooth) => {
@@ -228,7 +232,7 @@ export default function MarketplaceSection() {
         cat,
         count: cat === 'All' ? CATALOGUE.length : CATALOGUE.filter((p) => p.cat === cat).length,
       })),
-    [CATALOGUE],
+    [CATALOGUE, CATEGORIES],
   );
 
   // --- cart / wishlist / compare mutations ---

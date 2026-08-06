@@ -6,6 +6,7 @@ import { sendResponse } from '../utils/sendResponse.js';
 import { issueTokenPair, signAccessToken, verifyRefreshToken } from '../utils/generateTokens.js';
 import { sendEmail } from '../utils/sendEmail.js';
 import { env } from '../config/env.js';
+import { createNotification } from './notification.controller.js';
 
 // @route  POST /api/v1/auth/register
 // @access Public
@@ -23,6 +24,16 @@ export const register = asyncHandler(async (req, res) => {
     role: role === 'seller' ? 'seller' : 'customer',
     sellerProfile: role === 'seller' ? { businessName, status: 'pending' } : undefined,
   });
+
+  if (user.role === 'seller') {
+    await createNotification({
+      role: 'admin',
+      type: 'system',
+      title: 'New seller awaiting approval',
+      message: `${user.name} (${businessName || user.email}) registered as a seller and is awaiting approval.`,
+      link: `/admin/sellers`,
+    });
+  }
 
   const accessToken = issueTokenPair(res, user);
   sendResponse(res, 201, 'Account created successfully.', { user: user.toSafeJSON(), accessToken });

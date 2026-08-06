@@ -28,6 +28,7 @@ function backendToFrontend(p) {
     specs: p.specs && typeof p.specs === 'object' ? p.specs : {},
     status: p.status === 'active' ? 'Active' : p.status === 'archived' ? 'Draft' : 'Draft',
     archived: p.status === 'archived',
+    featured: !!p.isFeatured,
     createdDate: p.createdAt ? p.createdAt.slice(0, 10) : new Date().toISOString().slice(0, 10),
   };
 }
@@ -60,6 +61,7 @@ export function ProductsProvider({ children }) {
   const showToast = useToast();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState([]);
   const categoryMapRef = useRef(new Map());
 
   const loadProducts = useCallback(async () => {
@@ -75,18 +77,32 @@ export function ProductsProvider({ children }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const loadCategories = useCallback(async () => {
+    try {
+      const res = await api.get('/categories?limit=100&sort=sortOrder,name');
+      const active = res.data.filter((c) => c.isActive !== false);
+      categoryMapRef.current = new Map(res.data.map((c) => [c.name, c._id]));
+      categoryMapRef.current.set('__first__', res.data[0]?._id);
+      setCategories(
+        active.map((c) => ({
+          id: c._id,
+          name: c.name,
+          slug: c.slug,
+          description: c.description || '',
+          image: resolveImageUrl(c.image?.url),
+        })),
+      );
+    } catch (err) {
+      console.error('Failed to load categories from the API:', err);
+    }
+  }, []);
+
   useEffect(() => {
     (async () => {
-      try {
-        const res = await api.get('/categories?limit=100');
-        categoryMapRef.current = new Map(res.data.map((c) => [c.name, c._id]));
-        categoryMapRef.current.set('__first__', res.data[0]?._id);
-      } catch (err) {
-        console.error('Failed to load categories from the API:', err);
-      }
+      await loadCategories();
       await loadProducts();
     })();
-  }, [loadProducts]);
+  }, [loadCategories, loadProducts]);
 
   const resolveCategoryId = useCallback((catName) => {
     return categoryMapRef.current.get(catName) || categoryMapRef.current.get('__first__') || null;
@@ -107,6 +123,7 @@ export function ProductsProvider({ children }) {
       if (draft.status !== undefined) fd.append('status', frontendStatusToBackend(draft.status));
       if (draft.tag) fd.append('tag', draft.tag);
       if (draft.warranty) fd.append('warranty', draft.warranty);
+      if (draft.featured !== undefined) fd.append('isFeatured', draft.featured ? 'true' : 'false');
 
       const galleryEntries = Array.isArray(draft.gallery) && draft.gallery.length ? draft.gallery : draft.img ? [draft.img] : [];
       if (galleryEntries.length) {
@@ -217,6 +234,7 @@ export function ProductsProvider({ children }) {
     () => ({
       products,
       loading,
+      categories,
       findById,
       addProduct,
       editProduct,
@@ -227,10 +245,12 @@ export function ProductsProvider({ children }) {
       bulkArchiveProducts,
       bulkSetStatusProducts,
       refetch: loadProducts,
+      refetchCategories: loadCategories,
     }),
     [
       products,
       loading,
+      categories,
       findById,
       addProduct,
       editProduct,
@@ -241,6 +261,7 @@ export function ProductsProvider({ children }) {
       bulkArchiveProducts,
       bulkSetStatusProducts,
       loadProducts,
+      loadCategories,
     ],
   );
 

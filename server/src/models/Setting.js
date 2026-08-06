@@ -26,6 +26,7 @@ const settingSchema = new mongoose.Schema(
     branding: {
       accentColor: { type: String, trim: true, default: '#E2A347' },
       logoUrl: { type: String, trim: true, default: '' },
+      faviconUrl: { type: String, trim: true, default: '' },
     },
     analytics: {
       googleAnalyticsId: { type: String, trim: true, default: '' },
@@ -35,6 +36,44 @@ const settingSchema = new mongoose.Schema(
     // env vars only (server/src/config/env.js). Persisting a mail password in the app
     // database (readable by anyone with Setting:read) would be a real credential-exposure
     // risk for no real benefit, so that admin tab stays local-only by design, not oversight.
+
+    // Homepage banner carousel — admin-managed, each with its own image/link/order.
+    banners: {
+      type: [
+        {
+          title: { type: String, trim: true, default: '' },
+          subtitle: { type: String, trim: true, default: '' },
+          image: {
+            url: { type: String, default: '' },
+            publicId: { type: String, default: '' },
+          },
+          link: { type: String, trim: true, default: '' },
+          isActive: { type: Boolean, default: true },
+          sortOrder: { type: Number, default: 0 },
+        },
+      ],
+      default: [],
+    },
+
+    // Site-wide announcement bar (e.g. a sale or notice shown above the header).
+    announcement: {
+      text: { type: String, trim: true, default: '' },
+      link: { type: String, trim: true, default: '' },
+      isActive: { type: Boolean, default: false },
+    },
+
+    // Homepage "spotlight" — a small, hand-curated, ordered subset of products (distinct
+    // from Product.isFeatured, which is a per-product flag sellers/admins set from the
+    // Products page; this is the admin's specific homepage picks and their display order).
+    spotlightProductIds: { type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }], default: [] },
+
+    tax: {
+      rate: { type: Number, min: 0, max: 100, default: 0 }, // percentage
+    },
+    shipping: {
+      flatRate: { type: Number, min: 0, default: 0 },
+      freeShippingThreshold: { type: Number, min: 0, default: 0 }, // 0 = disabled
+    },
   },
   { timestamps: true },
 );

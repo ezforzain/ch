@@ -2,9 +2,23 @@
 // Drives CollectionTable (columns) and RecordModal (fields) for all 15
 // generic schema-driven collections.
 
-import { CATEGORIES } from '../catalogue';
-
 export const schemas = {
+  categories: {
+    label: 'Categories',
+    singular: 'Category',
+    columns: [
+      { key: 'image', label: 'Image', type: 'image' },
+      { key: 'name', label: 'Name' },
+      { key: 'description', label: 'Description' },
+      { key: 'sortOrder', label: 'Order' },
+    ],
+    fields: [
+      { key: 'name', label: 'Name', type: 'text', required: true },
+      { key: 'description', label: 'Description', type: 'textarea' },
+      { key: 'sortOrder', label: 'Sort order', type: 'text' },
+      { key: 'image', label: 'Image', type: 'file' },
+    ],
+  },
   leads: {
     label: 'Leads',
     singular: 'Lead',
@@ -22,25 +36,6 @@ export const schemas = {
       { key: 'city', label: 'City', type: 'text' },
       { key: 'source', label: 'Source', type: 'select', options: ['Website', 'WhatsApp', 'Call', 'Planner', 'Referral'] },
       { key: 'status', label: 'Status', type: 'select', options: ['New', 'Contacted', 'Qualified', 'Converted', 'Lost'] },
-    ],
-  },
-  customers: {
-    label: 'Customers',
-    singular: 'Customer',
-    // Real customers are self-registered accounts (see server's Auth module) — admin views
-    // and can't fabricate one from here, matching the backend's actual capability.
-    readonly: true,
-    columns: [
-      { key: 'name', label: 'Name' },
-      { key: 'city', label: 'City' },
-      { key: 'phone', label: 'Phone' },
-      { key: 'email', label: 'Email' },
-    ],
-    fields: [
-      { key: 'name', label: 'Name', type: 'text' },
-      { key: 'city', label: 'City', type: 'text' },
-      { key: 'phone', label: 'Phone', type: 'tel' },
-      { key: 'email', label: 'Email', type: 'email' },
     ],
   },
   services: {
@@ -108,22 +103,6 @@ export const schemas = {
       { key: 'status', label: 'Status', type: 'select', options: ['Pending', 'Confirmed', 'Completed', 'Cancelled'] },
     ],
     hasCalendar: true,
-  },
-  messages: {
-    label: 'Messages',
-    singular: 'Message',
-    hideDuplicateArchive: true,
-    columns: [
-      { key: 'name', label: 'Name' },
-      { key: 'preview', label: 'Message' },
-      { key: 'date', label: 'Date' },
-      { key: 'status', label: 'Status', type: 'status' },
-    ],
-    fields: [
-      { key: 'name', label: 'Name', type: 'text' },
-      { key: 'preview', label: 'Message', type: 'textarea' },
-      { key: 'status', label: 'Status', type: 'select', options: ['Unread', 'Read', 'Replied'] },
-    ],
   },
   blog: {
     label: 'Blog',
@@ -242,6 +221,11 @@ export const schemas = {
     // same shared product shape the public Marketplace reads — see
     // src/context/ProductsContext.jsx. Labels are unchanged; only the
     // underlying storage keys are renamed, so the form looks identical.
+    //
+    // NOTE: the 'cat' field's `options` below is intentionally empty — real category
+    // names now come from the database (Category collection), not a hardcoded list, so
+    // src/components/admin/pages/Products.jsx clones this schema at render time and
+    // injects live options from ProductsContext before passing it to CollectionTable.
     categoryFilterKey: 'cat',
     saveLabel: 'Save Product',
     hideDuplicateArchive: true,
@@ -256,27 +240,22 @@ export const schemas = {
     ],
     fields: [
       { key: 'name', label: 'Product Name', type: 'text', required: true },
-      {
-        key: 'cat',
-        label: 'Category',
-        type: 'select',
-        options: CATEGORIES.filter((c) => c !== 'All'),
-        required: true,
-      },
+      { key: 'cat', label: 'Category', type: 'select', options: [], required: true },
       { key: 'seller', label: 'Brand', type: 'text' },
       { key: 'price', label: 'Price (PKR)', type: 'text', required: true },
       { key: 'stock', label: 'Stock Quantity', type: 'text', required: true },
       { key: 'gallery', label: 'Product Images', type: 'multifile', required: true },
       { key: 'note', label: 'Short Description', type: 'textarea', required: true },
       { key: 'status', label: 'Status', type: 'select', options: ['Active', 'Draft', 'Out of Stock'] },
+      { key: 'featured', label: 'Featured Product', type: 'checkbox', hint: 'Show in featured/spotlight sections' },
     ],
   },
 };
 
-// Order matches source `genericPages` array — pages rendered via the generic
-// CollectionTable (products/appointments/users get their own page wrapper
-// composed around the same table logic).
+// Pages rendered via the generic CollectionTable (products/appointments/users get their
+// own page wrapper composed around the same table logic; customers/messages/sellers/
+// notifications are bespoke pages with their own UI, not schema-driven).
 export const genericPages = [
-  'leads', 'customers', 'services', 'products', 'projects', 'orders', 'appointments',
-  'messages', 'blog', 'testimonials', 'team', 'cities', 'faqs', 'users', 'activity',
+  'leads', 'categories', 'services', 'products', 'projects', 'orders', 'appointments',
+  'blog', 'testimonials', 'team', 'cities', 'faqs', 'users', 'activity',
 ];

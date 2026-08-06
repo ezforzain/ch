@@ -111,14 +111,31 @@ export default function RecordModal({ schema, mode, row, onClose, onSubmit }) {
             {f.label}
             {f.required ? ' *' : ''}
 
-            {f.type !== 'textarea' && f.type !== 'select' && f.type !== 'richtext' && f.type !== 'file' && f.type !== 'multifile' && (
-              <input
-                type={f.type}
-                value={draft[f.key] || ''}
-                onChange={(e) => setField(f.key, e.target.value)}
-                placeholder={f.label}
-                className="h-[42px] rounded-[10px] border border-[var(--a-line)] bg-[var(--a-paper)] px-3 text-sm text-[var(--a-ink)] outline-none"
-              />
+            {f.type !== 'textarea' &&
+              f.type !== 'select' &&
+              f.type !== 'richtext' &&
+              f.type !== 'file' &&
+              f.type !== 'multifile' &&
+              f.type !== 'checkbox' && (
+                <input
+                  type={f.type}
+                  value={draft[f.key] || ''}
+                  onChange={(e) => setField(f.key, e.target.value)}
+                  placeholder={f.label}
+                  className="h-[42px] rounded-[10px] border border-[var(--a-line)] bg-[var(--a-paper)] px-3 text-sm text-[var(--a-ink)] outline-none"
+                />
+              )}
+
+            {f.type === 'checkbox' && (
+              <label className="flex w-fit cursor-pointer items-center gap-2 font-normal">
+                <input
+                  type="checkbox"
+                  checked={!!draft[f.key]}
+                  onChange={(e) => setField(f.key, e.target.checked)}
+                  className="h-4 w-4"
+                />
+                <span className="text-[12.5px] text-[var(--a-mut)]">{f.hint || 'Enabled'}</span>
+              </label>
             )}
 
             {f.type === 'textarea' && (

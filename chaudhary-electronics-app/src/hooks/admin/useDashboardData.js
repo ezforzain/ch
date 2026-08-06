@@ -56,14 +56,17 @@ export function useDashboardData() {
   const s = state.summary;
   const statCards = s
     ? [
+        ['Total users', String(s.totalUsers ?? 0), '⚿', '#E3EEDF'],
+        ['Total sellers', String(s.sellerCount ?? 0), '⛁', '#E3EEDF'],
+        ['Total buyers', String(s.customerCount ?? 0), '◎', '#E3EEDF'],
+        ['Total products', String(s.productCount ?? 0), '▥', '#F7ECD9'],
         ['Total orders', String(s.orderCount ?? 0), '▤', '#F7ECD9'],
+        ['Total revenue', fmtPKR(s.revenue ?? 0), '₨', '#F7ECD9'],
+        ['Pending approvals', String(s.pendingSellerApprovals ?? 0), '⛁', '#F6E2DC'],
         ['New leads', String(s.newLeads ?? 0), '◈', '#E3EEDF'],
         ['Pending appointments', String(s.pendingAppointments ?? 0), '◷', '#F6E2DC'],
         ['Active products', String(s.activeProducts ?? 0), '▣', '#F7ECD9'],
         ['Low stock products', String(s.lowStockProducts ?? 0), '⚠', '#F6E2DC'],
-        ['Revenue', fmtPKR(s.revenue ?? 0), '₨', '#F7ECD9'],
-        ['Customers', String(s.customerCount ?? 0), '◎', '#E3EEDF'],
-        ['Sellers', String(s.sellerCount ?? 0), '⛁', '#E3EEDF'],
       ]
     : [];
 

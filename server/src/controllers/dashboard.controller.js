@@ -18,17 +18,29 @@ export const getSummary = asyncHandler(async (req, res) => {
   const productFilter = scopeFor(req);
   const orderFilter = isSeller ? { 'items.seller': req.user._id } : {};
 
-  const [productCount, activeProducts, lowStock, orders, customerCount, sellerCount, newLeads, pendingAppointments] =
-    await Promise.all([
-      Product.countDocuments(productFilter),
-      Product.countDocuments({ ...productFilter, status: 'active' }),
-      Product.countDocuments({ ...productFilter, stock: { $lte: 10, $gt: 0 } }),
-      Order.find(orderFilter),
-      isSeller ? Promise.resolve(null) : User.countDocuments({ role: 'customer' }),
-      isSeller ? Promise.resolve(null) : User.countDocuments({ role: 'seller' }),
-      isSeller ? Promise.resolve(null) : Lead.countDocuments({ status: 'new' }),
-      isSeller ? Promise.resolve(null) : Appointment.countDocuments({ status: 'pending' }),
-    ]);
+  const [
+    productCount,
+    activeProducts,
+    lowStock,
+    orders,
+    customerCount,
+    sellerCount,
+    newLeads,
+    pendingAppointments,
+    totalUsers,
+    pendingSellerApprovals,
+  ] = await Promise.all([
+    Product.countDocuments(productFilter),
+    Product.countDocuments({ ...productFilter, status: 'active' }),
+    Product.countDocuments({ ...productFilter, stock: { $lte: 10, $gt: 0 } }),
+    Order.find(orderFilter),
+    isSeller ? Promise.resolve(null) : User.countDocuments({ role: 'customer' }),
+    isSeller ? Promise.resolve(null) : User.countDocuments({ role: 'seller' }),
+    isSeller ? Promise.resolve(null) : Lead.countDocuments({ status: 'new' }),
+    isSeller ? Promise.resolve(null) : Appointment.countDocuments({ status: 'pending' }),
+    isSeller ? Promise.resolve(null) : User.countDocuments({}),
+    isSeller ? Promise.resolve(null) : User.countDocuments({ role: 'seller', 'sellerProfile.status': 'pending' }),
+  ]);
 
   let revenue = 0;
   for (const order of orders) {
@@ -47,7 +59,9 @@ export const getSummary = asyncHandler(async (req, res) => {
     lowStockProducts: lowStock,
     orderCount: orders.length,
     revenue,
-    ...(isSeller ? {} : { customerCount, sellerCount, newLeads, pendingAppointments }),
+    ...(isSeller
+      ? {}
+      : { customerCount, sellerCount, newLeads, pendingAppointments, totalUsers, pendingSellerApprovals }),
   });
 });
 

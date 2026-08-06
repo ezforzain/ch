@@ -21,6 +21,7 @@ export default function Products() {
   const adapter = useMemo(
     () => ({
       data: { products: store.products },
+      loading: store.loading,
       addRecord: (_page, draft) => store.addProduct(draft),
       editRecord: (_page, draft) => store.editProduct(draft.id, draft),
       deleteRecord: (_page, id) => store.deleteProduct(id),
@@ -33,5 +34,18 @@ export default function Products() {
     [store],
   );
 
-  return <CollectionTable admin={adapter} page="products" schema={schemas.products} />;
+  // Category names now come from the database (ProductsContext fetches /categories), not a
+  // hardcoded list — clone the schema so the form's Category dropdown always reflects
+  // whatever categories currently exist, without mutating the shared schemas.products object.
+  const liveSchema = useMemo(
+    () => ({
+      ...schemas.products,
+      fields: schemas.products.fields.map((f) =>
+        f.key === 'cat' ? { ...f, options: store.categories.map((c) => c.name) } : f,
+      ),
+    }),
+    [store.categories],
+  );
+
+  return <CollectionTable admin={adapter} page="products" schema={liveSchema} />;
 }
