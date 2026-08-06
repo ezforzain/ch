@@ -85,20 +85,17 @@ export default function CollectionTable({ admin, page: pageProp, schema: schemaP
     setConfirm(null);
   }
 
-  // Returns whether the save actually succeeded — RecordModal only closes itself and
-  // clears its "saving" state once this resolves true; on failure it stays open (with an
-  // inline error) so the admin can fix the fields and retry, instead of silently discarding
-  // their edits. The underlying admin.addRecord/editRecord already toast the specific
-  // server error on failure (see useApiCollection.js / ProductsContext.jsx).
+  // Resolves to { ok, message } — RecordModal/ProductFormDrawer only close themselves and
+  // clear their "saving" state once `ok` is true; on failure they stay open and show `message`
+  // (the real reason — session expired, a specific validation error, permission denied,
+  // a network/CORS failure, …) instead of silently discarding the admin's edits behind one
+  // generic "something went wrong". admin.addRecord/editRecord (useApiCollection.js /
+  // ProductsContext.jsx) already toast the same message, so this doesn't re-derive it.
   async function handleSubmitModal(draft) {
-    if (modal.mode === 'add') {
-      const result = await admin.addRecord(page, draft);
-      if (result) showToast('Record added.');
-      return !!result;
-    }
-    const result = await admin.editRecord(page, draft);
-    if (result) showToast('Record updated.');
-    return !!result;
+    const result =
+      modal.mode === 'add' ? await admin.addRecord(page, draft) : await admin.editRecord(page, draft);
+    if (result.ok) showToast(modal.mode === 'add' ? 'Record added.' : 'Record updated.');
+    return result;
   }
 
   function onDelete(row) {

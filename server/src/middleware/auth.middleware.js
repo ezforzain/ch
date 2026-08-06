@@ -13,8 +13,12 @@ export const protect = asyncHandler(async (req, res, next) => {
   let payload;
   try {
     payload = verifyAccessToken(token);
-  } catch {
-    throw ApiError.unauthorized('Your session has expired or is invalid. Please log in again.');
+  } catch (err) {
+    // Distinguish "expired" from "malformed/tampered/wrong-secret" — the frontend uses this
+    // to decide whether a silent refresh is worth attempting vs. sending the user straight
+    // back to /login (an invalid token will never become valid by refreshing).
+    if (err.name === 'TokenExpiredError') throw ApiError.unauthorized('Session expired. Please log in again.');
+    throw ApiError.unauthorized('Invalid authentication token. Please log in again.');
   }
 
   const user = await User.findById(payload.sub);

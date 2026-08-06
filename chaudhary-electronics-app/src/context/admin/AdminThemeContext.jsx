@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { palettes, staticColors } from '../../data/admin/theme';
 
 const AdminThemeContext = createContext(null);
@@ -35,6 +35,20 @@ export function AdminThemeProvider({ children }) {
     }),
     [palette],
   );
+
+  // Every admin dialog (RecordModal, ConfirmDialog, ProductFormDrawer, …) renders through
+  // Modal.jsx's React portal to document.body — outside this DOM subtree — so `style={cssVars}`
+  // on AdminLayout's own div never reaches it; `var(--a-white)` etc. would resolve to nothing
+  // there, silently making "white" panels transparent. Mirroring the same vars onto
+  // <html> makes them available anywhere in the document, portals included, and reverting
+  // them on unmount keeps the public site's own (unrelated) palette from ever seeing these.
+  useEffect(() => {
+    const root = document.documentElement;
+    Object.entries(cssVars).forEach(([key, value]) => root.style.setProperty(key, value));
+    return () => {
+      Object.keys(cssVars).forEach((key) => root.style.removeProperty(key));
+    };
+  }, [cssVars]);
 
   const value = useMemo(() => ({ theme, toggleTheme, palette, cssVars }), [theme, toggleTheme, palette, cssVars]);
 

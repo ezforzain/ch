@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Modal from '../../ui/Modal';
 import { ghostBtnClass, iconBtnClass, primaryBtnClass, richBtnClass } from '../adminStyles';
 import { imgUrl } from '../../../data/catalogue';
@@ -32,6 +33,7 @@ function readFileAsDataURL(file) {
  * the admin typed is silently lost.
  */
 export default function RecordModal({ schema, mode, row, onClose, onSubmit }) {
+  const navigate = useNavigate();
   const [draft, setDraft] = useState(() => buildInitialDraft(schema, mode, row));
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -93,12 +95,18 @@ export default function RecordModal({ schema, mode, row, onClose, onSubmit }) {
     }
     setError('');
     setSaving(true);
-    const ok = await onSubmit(draft);
+    const result = await onSubmit(draft);
     setSaving(false);
-    if (ok) {
+    if (result.ok) {
       onClose();
-    } else {
-      setError('Could not save — please check the details below and try again.');
+      return;
+    }
+    setError(result.message || 'Could not save — please check the details below and try again.');
+    // A 401 here means the retry-via-refresh in lib/api.js already happened and still
+    // failed — the session is genuinely gone, so send the admin back to sign in rather
+    // than leaving them stuck on a form that can never save.
+    if (result.status === 401) {
+      setTimeout(() => navigate('/login'), 1200);
     }
   }
 

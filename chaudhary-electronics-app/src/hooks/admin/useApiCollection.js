@@ -89,11 +89,13 @@ export function useApiCollection({
       try {
         const { body, isForm } = await buildPayload(draft);
         const res = await api.post(endpoint, body, { isForm });
-        setRows((r) => [mapFromApi(res.data), ...r]);
-        return mapFromApi(res.data);
+        const created = mapFromApi(res.data);
+        setRows((r) => [created, ...r]);
+        return { ok: true, data: created };
       } catch (err) {
-        showToast(err.message || 'Could not create record.');
-        return null;
+        const message = err.message || 'Could not create record.';
+        showToast(message);
+        return { ok: false, message, status: err.status };
       }
     },
     [buildPayload, endpoint, mapFromApi, showToast],
@@ -106,10 +108,11 @@ export function useApiCollection({
         const res = await api.patch(`${endpoint}/${draft.id}`, body, { isForm });
         const updated = mapFromApi(res.data);
         setRows((r) => r.map((row) => (row.id === draft.id ? updated : row)));
-        return updated;
+        return { ok: true, data: updated };
       } catch (err) {
-        showToast(err.message || 'Could not update record.');
-        return null;
+        const message = err.message || 'Could not update record.';
+        showToast(message);
+        return { ok: false, message, status: err.status };
       }
     },
     [buildPayload, endpoint, mapFromApi, showToast],

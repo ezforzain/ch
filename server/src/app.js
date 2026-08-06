@@ -22,13 +22,19 @@ const app = express();
 app.set('trust proxy', 1);
 
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } })); // allow the frontend to load /uploads images
+const LOCALHOST_ORIGIN_RE = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
+
 app.use(
   cors({
     // Explicit allowlist (CLIENT_URL, comma-separated) rather than a wildcard — this API
     // accepts an httpOnly credentialed cookie (the refresh token), so a permissive origin
-    // match would let any third-party site ride a logged-in user's session.
+    // match would let any third-party site ride a logged-in user's session. In development
+    // only, any localhost/127.0.0.1 port is also allowed — Vite silently jumps to 5174, 5175…
+    // when 5173 is taken, and a strict single-port allowlist there just breaks every
+    // authenticated request with an opaque CORS failure instead of anything actionable.
     origin(origin, callback) {
       if (!origin || env.clientUrls.includes(origin)) return callback(null, true);
+      if (env.nodeEnv !== 'production' && LOCALHOST_ORIGIN_RE.test(origin)) return callback(null, true);
       callback(new Error(`CORS: origin "${origin}" is not in CLIENT_URL`));
     },
     credentials: true, // required so the httpOnly refresh-token cookie is sent/received

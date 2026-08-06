@@ -54,12 +54,24 @@ async function request(method, path, { body, isForm = false, retry = true } = {}
     payload = JSON.stringify(body);
   }
 
-  const res = await fetch(`${API_BASE}${path}`, {
-    method,
-    headers,
-    body: payload,
-    credentials: 'include', // send/receive the httpOnly refresh-token cookie
-  });
+  let res;
+  try {
+    res = await fetch(`${API_BASE}${path}`, {
+      method,
+      headers,
+      body: payload,
+      credentials: 'include', // send/receive the httpOnly refresh-token cookie
+    });
+  } catch (networkErr) {
+    // fetch() itself only throws for things that never reached a server response at all:
+    // the backend is down, DNS/connection failure, or — very commonly in local dev — a CORS
+    // rejection (e.g. the frontend ended up on a port the backend's CLIENT_URL allowlist
+    // doesn't know about). status: 0 lets callers tell this apart from a real 401/403/etc.
+    if (import.meta.env.DEV) {
+      console.error(`[api] ${method} ${path} — network/CORS failure (browser blocked or unreachable):`, networkErr);
+    }
+    throw new ApiRequestError('Could not reach the server. Check your connection and try again.', 0, []);
+  }
 
   if (res.status === 401 && retry && path !== '/auth/refresh' && path !== '/auth/login') {
     const refreshed = await tryRefresh();
@@ -69,7 +81,13 @@ async function request(method, path, { body, isForm = false, retry = true } = {}
 
   const json = await parseJson(res);
   if (!res.ok) {
-    throw new ApiRequestError(json?.message || `Request failed (${res.status})`, res.status, json?.errors);
+    if (import.meta.env.DEV) {
+      console.error(`[api] ${method} ${path} — ${res.status} ${res.statusText}:`, json || '(no JSON body)');
+    }
+    // Prefer the first specific field error ("Price must be a positive number") over the
+    // generic envelope message ("Validation failed") — the generic one is never actionable.
+    const message = json?.errors?.[0]?.message || json?.message || `Request failed (${res.status})`;
+    throw new ApiRequestError(message, res.status, json?.errors);
   }
   return json; // { success, message, data, meta? }
 }

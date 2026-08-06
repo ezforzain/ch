@@ -114,7 +114,14 @@ export function ProductsProvider({ children }) {
       if (draft.name !== undefined) fd.append('name', draft.name);
       if (draft.cat !== undefined) {
         const categoryId = resolveCategoryId(draft.cat);
-        if (categoryId) fd.append('category', categoryId);
+        // Silently omitting `category` here used to let a stale/unresolvable selection
+        // through to the backend, which would then reject the whole request with a bare
+        // "Validation failed" — no indication *why*. Fail fast client-side instead, with a
+        // message that actually points at the fix (reload categories and retry).
+        if (!categoryId) {
+          throw new Error('Selected category could not be found. Please refresh the page and try again.');
+        }
+        fd.append('category', categoryId);
       }
       if (draft.seller !== undefined) fd.append('brand', draft.seller || 'Chaudhary Electronics');
       if (draft.price !== undefined) fd.append('price', String(draft.price).replace(/,/g, ''));
@@ -143,10 +150,12 @@ export function ProductsProvider({ children }) {
         const res = await api.post('/products', fd, { isForm: true });
         const product = backendToFrontend(res.data);
         setProducts((list) => [product, ...list]);
-        return product;
+        return { ok: true, data: product };
       } catch (err) {
-        showToast(err.message || 'Could not create product.');
-        return null;
+        const message = err.message || 'Could not create product.';
+        if (import.meta.env.DEV) console.error('[ProductsContext] addProduct failed:', err);
+        showToast(message);
+        return { ok: false, message, status: err.status };
       }
     },
     [buildFormData, showToast],
@@ -159,10 +168,12 @@ export function ProductsProvider({ children }) {
         const res = await api.patch(`/products/${id}`, fd, { isForm: true });
         const product = backendToFrontend(res.data);
         setProducts((list) => list.map((p) => (p.id === id ? product : p)));
-        return product;
+        return { ok: true, data: product };
       } catch (err) {
-        showToast(err.message || 'Could not update product.');
-        return null;
+        const message = err.message || 'Could not update product.';
+        if (import.meta.env.DEV) console.error('[ProductsContext] editProduct failed:', err);
+        showToast(message);
+        return { ok: false, message, status: err.status };
       }
     },
     [buildFormData, showToast],
