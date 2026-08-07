@@ -25,3 +25,17 @@ export function imgOrFallback(url, terms, seed = 3) {
 export function waLink(number, message) {
   return `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
 }
+
+/** Normalizes a free-text numeric input (price/stock fields aren't `type="number"` — that
+ * would block typing thousands-separator commas — so admins can end up with stray
+ * whitespace, a pasted "Rs " prefix, or "27,500" style commas in the raw value) into a plain
+ * digits[.digits] string. Used to make sure the exact value validated client-side is also the
+ * exact value sent to the API — the backend's isFloat/isInt checks reject anything but a bare
+ * numeric string, so e.g. a trailing space (invisible, easy to type by accident) would
+ * otherwise pass a lenient client parseFloat() check but fail the server's stricter one. */
+export function cleanNumericInput(raw) {
+  // Keeps '-' (unlike commas/currency symbols/whitespace, it's meaningful here) so a
+  // genuinely negative input still reads as negative and gets correctly rejected by the
+  // positive-number check downstream, instead of being silently stripped into a positive one.
+  return String(raw ?? '').replace(/[^0-9.-]/g, '');
+}

@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useToast } from './ToastContext';
 import { api, resolveImageUrl } from '../lib/api';
+import { cleanNumericInput } from '../lib/format';
 
 const ProductsContext = createContext(null);
 
@@ -124,8 +125,8 @@ export function ProductsProvider({ children }) {
         fd.append('category', categoryId);
       }
       if (draft.seller !== undefined) fd.append('brand', draft.seller || 'Chaudhary Electronics');
-      if (draft.price !== undefined) fd.append('price', String(draft.price).replace(/,/g, ''));
-      if (draft.stock !== undefined) fd.append('stock', String(draft.stock).replace(/,/g, ''));
+      if (draft.price !== undefined) fd.append('price', cleanNumericInput(draft.price));
+      if (draft.stock !== undefined) fd.append('stock', cleanNumericInput(draft.stock));
       if (draft.note !== undefined) fd.append('description', draft.note);
       if (draft.status !== undefined) fd.append('status', frontendStatusToBackend(draft.status));
       if (draft.tag) fd.append('tag', draft.tag);

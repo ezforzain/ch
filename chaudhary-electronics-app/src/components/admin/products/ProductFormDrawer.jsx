@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Modal from '../../ui/Modal';
 import Breadcrumbs from '../../ui/Breadcrumbs';
 import { imgUrl } from '../../../data/catalogue';
+import { cleanNumericInput } from '../../../lib/format';
 import { ghostBtnClass } from '../adminStyles';
 
 const STATUS_OPTIONS = ['Active', 'Draft', 'Out of Stock'];
@@ -142,9 +143,9 @@ export default function ProductFormDrawer({ mode, row, categories, onClose, onSu
     if (!String(draft.name || '').trim()) next.name = 'Product name is required.';
     if (requireFull) {
       if (!String(draft.cat || '').trim()) next.cat = 'Please choose a category.';
-      const priceNum = parseFloat(String(draft.price || '').replace(/,/g, ''));
+      const priceNum = parseFloat(cleanNumericInput(draft.price));
       if (!draft.price || Number.isNaN(priceNum) || priceNum <= 0) next.price = 'Enter a valid price greater than 0.';
-      const stockNum = parseFloat(String(draft.stock || '').replace(/,/g, ''));
+      const stockNum = parseFloat(cleanNumericInput(draft.stock));
       if (String(draft.stock) === '' || Number.isNaN(stockNum) || stockNum < 0) next.stock = 'Enter a valid stock quantity.';
       if (!draft.gallery || draft.gallery.length === 0) next.gallery = 'Add at least one product image.';
       if (!String(draft.note || '').trim()) next.note = 'Add a short description.';
@@ -163,7 +164,14 @@ export default function ProductFormDrawer({ mode, row, categories, onClose, onSu
     setBanner('');
     setSaving(true);
     setSavingAction(action);
-    const payload = { ...draft, status: action === 'draft' ? 'Draft' : draft.status };
+    const payload = {
+      ...draft,
+      status: action === 'draft' ? 'Draft' : draft.status,
+      // Send exactly what was just validated above, not the raw (possibly
+      // whitespace/comma/currency-prefix-containing) text the admin typed.
+      price: draft.price !== undefined && draft.price !== '' ? cleanNumericInput(draft.price) : draft.price,
+      stock: draft.stock !== undefined && draft.stock !== '' ? cleanNumericInput(draft.stock) : draft.stock,
+    };
     const result = await onSubmit(payload);
     setSaving(false);
     setSavingAction(null);
