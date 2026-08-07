@@ -23,6 +23,7 @@ export default function CartDrawer({
   onRemoveWish,
   onAddToCartFromWish,
   onCheckout,
+  onOpenProduct,
 }) {
   const isCart = kind === 'cart';
   const cartTotal = cartLines.reduce((sum, l) => sum + l.product.price * l.qty, 0);
@@ -85,15 +86,28 @@ export default function CartDrawer({
         <div className="flex-1 overflow-y-auto py-2">
           {rows.map((r) => (
             <div key={r.key} className="flex items-center gap-3.5 border-b border-line px-6 py-[15px]">
-              <img
-                loading="lazy"
-                decoding="async"
-                src={imgUrl(r.img, 160)}
-                alt=""
-                className="h-[58px] w-[58px] flex-shrink-0 rounded-2xl bg-[#EAE5DB] object-cover"
-              />
+              <button
+                type="button"
+                onClick={() => onOpenProduct?.(r.key)}
+                aria-label={`View details for ${r.name}`}
+                className="block flex-shrink-0 cursor-pointer overflow-hidden rounded-2xl border-none bg-[#EAE5DB] p-0"
+              >
+                <img
+                  loading="lazy"
+                  decoding="async"
+                  src={imgUrl(r.img, 160)}
+                  alt=""
+                  className="h-[58px] w-[58px] object-cover"
+                />
+              </button>
               <span className="flex min-w-0 flex-1 flex-col gap-1">
-                <span className="text-[14.5px] font-[650] leading-[1.3]">{r.name}</span>
+                <button
+                  type="button"
+                  onClick={() => onOpenProduct?.(r.key)}
+                  className="truncate border-none bg-transparent p-0 text-left text-[14.5px] font-[650] leading-[1.3] text-ink hover:text-acc"
+                >
+                  {r.name}
+                </button>
                 <span className="text-[13px] text-mut" data-tnum>{r.line}</span>
                 {r.showQty && (
                   <span className="mt-[3px] flex items-center gap-2">

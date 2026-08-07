@@ -440,6 +440,10 @@ export default function MarketplaceSection() {
         kind={drawerKind}
         cartLines={cartLines}
         wishItems={wishItems}
+        onOpenProduct={(id) => {
+          closeAll();
+          openDetail(id);
+        }}
         onIncQty={(id) => {
           const line = cartLines.find((l) => l.id === id);
           if (line) setLineQty(id, line.qty + 1);
