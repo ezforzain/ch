@@ -144,7 +144,12 @@ export default function ProductDetail() {
 
   const relatedProducts = useMemo(() => {
     if (!d) return [];
-    return products.filter((p) => p.id !== d.id && p.cat === d.cat).slice(0, RELATED_LIMIT);
+    const sameCategory = products.filter((p) => p.id !== d.id && p.cat === d.cat);
+    // Fall back to other real products when nothing shares this category (a small/young
+    // catalogue) — still genuine product data either way, just a wider net, matching the
+    // common "customers also viewed" fallback rather than silently hiding the whole section.
+    const pool = sameCategory.length > 0 ? sameCategory : products.filter((p) => p.id !== d.id);
+    return pool.slice(0, RELATED_LIMIT);
   }, [products, d]);
 
   if (!d) {
@@ -453,7 +458,16 @@ export default function ProductDetail() {
 
         {/* Tabbed info panel */}
         <div className="rounded-[24px] border border-line bg-paper">
-          <div role="tablist" aria-label="Product information" className="flex flex-wrap gap-x-1 gap-y-0 overflow-x-auto border-b border-line px-4 sm:px-6">
+          {/* flex-nowrap is deliberate: mixing flex-wrap with overflow-x-auto makes the browser
+              treat overflow-y as `auto` too (a CSS quirk — setting one overflow axis to
+              non-visible forces the other off `visible`), which showed a stray vertical
+              scrollbar with spinner arrows the moment the tabs wrapped to a second line on
+              narrower screens. Single row + horizontal scroll avoids that entirely. */}
+          <div
+            role="tablist"
+            aria-label="Product information"
+            className="flex flex-nowrap gap-1 overflow-x-auto overflow-y-hidden border-b border-line px-4 sm:px-6"
+          >
             {TABS.map((t) => (
               <button
                 key={t.key}
@@ -472,7 +486,7 @@ export default function ProductDetail() {
             ))}
           </div>
 
-          <div className="p-[clamp(18px,2.4vw,30px)]">
+          <div className="min-h-[220px] p-[clamp(18px,2.4vw,30px)]">
             {tab === 'description' && (
               <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
                 <div className="flex flex-col gap-3">
