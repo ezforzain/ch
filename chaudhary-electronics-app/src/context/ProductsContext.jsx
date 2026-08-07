@@ -24,6 +24,7 @@ function backendToFrontend(p) {
     rating: Number(p.rating) || 0,
     reviews: Number(p.numReviews) || 0,
     stock: Number(p.stock) || 0,
+    moq: Math.max(1, Number(p.moq) || 1),
     seller: p.brand || 'Chaudhary Electronics',
     warranty: p.warranty || '',
     specs: p.specs && typeof p.specs === 'object' ? p.specs : {},
@@ -127,6 +128,7 @@ export function ProductsProvider({ children }) {
       if (draft.seller !== undefined) fd.append('brand', draft.seller || 'Chaudhary Electronics');
       if (draft.price !== undefined) fd.append('price', cleanNumericInput(draft.price));
       if (draft.stock !== undefined) fd.append('stock', cleanNumericInput(draft.stock));
+      if (draft.moq) fd.append('moq', cleanNumericInput(draft.moq));
       if (draft.note !== undefined) fd.append('description', draft.note);
       if (draft.status !== undefined) fd.append('status', frontendStatusToBackend(draft.status));
       if (draft.tag) fd.append('tag', draft.tag);

@@ -29,6 +29,7 @@ const productSchema = new mongoose.Schema(
     warranty: { type: String, trim: true, default: '' },
 
     stock: { type: Number, required: true, min: 0, default: 0 },
+    moq: { type: Number, min: 1, default: 1 }, // minimum order quantity — 1 for almost all products
     rating: { type: Number, min: 0, max: 5, default: 0 },
     numReviews: { type: Number, min: 0, default: 0 },
     popularity: { type: Number, default: 0 }, // internal ranking score, bumped on each order

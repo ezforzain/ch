@@ -24,6 +24,7 @@ function buildInitialDraft(mode, row, categories) {
     seller: '',
     price: '',
     stock: '',
+    moq: '',
     gallery: [],
     note: '',
     status: 'Active',
@@ -147,6 +148,11 @@ export default function ProductFormDrawer({ mode, row, categories, onClose, onSu
       if (!draft.price || Number.isNaN(priceNum) || priceNum <= 0) next.price = 'Enter a valid price greater than 0.';
       const stockNum = parseFloat(cleanNumericInput(draft.stock));
       if (String(draft.stock) === '' || Number.isNaN(stockNum) || stockNum < 0) next.stock = 'Enter a valid stock quantity.';
+      if (draft.moq) {
+        const moqNum = parseFloat(cleanNumericInput(draft.moq));
+        if (Number.isNaN(moqNum) || moqNum < 1) next.moq = 'Minimum order quantity must be 1 or more.';
+        else if (!Number.isNaN(stockNum) && moqNum > stockNum) next.moq = 'Minimum order quantity cannot exceed stock.';
+      }
       if (!draft.gallery || draft.gallery.length === 0) next.gallery = 'Add at least one product image.';
       if (!String(draft.note || '').trim()) next.note = 'Add a short description.';
     }
@@ -171,6 +177,7 @@ export default function ProductFormDrawer({ mode, row, categories, onClose, onSu
       // whitespace/comma/currency-prefix-containing) text the admin typed.
       price: draft.price !== undefined && draft.price !== '' ? cleanNumericInput(draft.price) : draft.price,
       stock: draft.stock !== undefined && draft.stock !== '' ? cleanNumericInput(draft.stock) : draft.stock,
+      moq: draft.moq ? cleanNumericInput(draft.moq) : '',
     };
     const result = await onSubmit(payload);
     setSaving(false);
@@ -360,15 +367,26 @@ export default function ProductFormDrawer({ mode, row, categories, onClose, onSu
 
               <div>
                 <SectionLabel>Inventory</SectionLabel>
-                <Field label="Stock quantity" required error={errors.stock}>
-                  <input
-                    inputMode="numeric"
-                    className={inputCls(errors.stock)}
-                    value={draft.stock}
-                    onChange={(e) => setField('stock', e.target.value)}
-                    placeholder="0"
-                  />
-                </Field>
+                <div className="flex flex-col gap-5">
+                  <Field label="Stock quantity" required error={errors.stock}>
+                    <input
+                      inputMode="numeric"
+                      className={inputCls(errors.stock)}
+                      value={draft.stock}
+                      onChange={(e) => setField('stock', e.target.value)}
+                      placeholder="0"
+                    />
+                  </Field>
+                  <Field label="Minimum order quantity" error={errors.moq}>
+                    <input
+                      inputMode="numeric"
+                      className={inputCls(errors.moq)}
+                      value={draft.moq}
+                      onChange={(e) => setField('moq', e.target.value)}
+                      placeholder="1"
+                    />
+                  </Field>
+                </div>
               </div>
 
               <div>

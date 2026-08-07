@@ -24,6 +24,11 @@ export const productValidator = [
     .customSanitizer(cleanNumericInput)
     .isInt({ min: 0 })
     .withMessage('Stock must be a non-negative integer'),
+  body('moq')
+    .optional({ checkFalsy: true })
+    .customSanitizer(cleanNumericInput)
+    .isInt({ min: 1 })
+    .withMessage('Minimum order quantity must be a whole number of 1 or more'),
   body('description').optional().trim().isLength({ max: 2000 }),
   body('warranty').optional().trim(),
   body('brand').optional().trim(),
