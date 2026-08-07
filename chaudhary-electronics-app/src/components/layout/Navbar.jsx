@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useLang } from '../../i18n/LangContext';
 import { useScrollY } from '../../hooks/useScrollY';
+import { useAutoHideHeader } from '../../hooks/useAutoHideHeader';
 import Bi from '../ui/Bi';
 import QuickSearch from './QuickSearch';
 
@@ -98,8 +99,20 @@ export default function Navbar() {
   const pillBackground = solid ? 'rgba(245,242,236,0.92)' : 'rgba(245,242,236,0.7)';
   const pillBoxShadow = `${solid ? '0 14px 46px -14px rgba(23,21,15,0.34)' : '0 12px 44px -14px rgba(23,21,15,0.3)'}, 0 1px 0 rgba(255,255,255,0.7) inset`;
 
+  // YouTube/Amazon-style auto-hide: slides up out of view on scroll-down, slides back down on
+  // the very next scroll-up. `forceVisible` keeps it shown while the mobile menu is open —
+  // sliding the bar away out from under its own open dropdown would be broken, not smooth.
+  const headerHidden = useAutoHideHeader(scrollY, { forceVisible: menuOpen });
+
   return (
-    <nav className="pointer-events-none fixed top-[14px] left-1/2 z-[900] flex w-[calc(100%-20px)] max-w-[1320px] -translate-x-1/2 flex-col items-center gap-[10px]">
+    <nav
+      className="pointer-events-none fixed top-[14px] left-1/2 z-[900] flex w-[calc(100%-20px)] max-w-[1320px] flex-col items-center gap-[10px] transition-transform duration-300 ease-[cubic-bezier(0.2,0.7,0.2,1)]"
+      // Inline style (not a Tailwind class) because it must combine the constant horizontal
+      // centering with a dynamic vertical hide/show offset in one `transform` — two separate
+      // transform-producing declarations (class + style) would just have the second silently
+      // clobber the first rather than composing.
+      style={{ transform: `translate(-50%, ${headerHidden ? 'calc(-100% - 24px)' : '0'})` }}
+    >
       <div
         className="box-border flex h-[76px] w-full items-center justify-between gap-1 rounded-[22px] border border-[rgba(23,21,15,0.09)] px-9 [backdrop-filter:blur(16px)_saturate(1.5)] transition-[box-shadow,background] duration-500 ease-in-out pointer-events-auto"
         style={{ background: pillBackground, boxShadow: pillBoxShadow }}
