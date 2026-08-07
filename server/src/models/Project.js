@@ -6,6 +6,9 @@ const projectSchema = new mongoose.Schema(
   {
     title: { type: String, required: [true, 'Title is required'], trim: true },
     category: { type: String, enum: ['Residential', 'Commercial', 'Security'], required: true },
+    // Workflow state (independent of `isPublished`, which controls public-site visibility —
+    // a project can be "In progress" and already published, or "Completed" and unpublished).
+    status: { type: String, enum: ['Completed', 'In progress', 'Pending'], default: 'Completed' },
     location: { type: String, trim: true, default: '' },
     size: { type: String, trim: true, default: '' }, // e.g. "10 kW Hybrid"
     completionTime: { type: String, trim: true, default: '' },

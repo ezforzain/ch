@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { imgFallback } from '../../lib/format';
-import { testimonials } from '../../data/testimonials';
+import { imgFallback, imgOrFallback } from '../../lib/format';
+import { api, resolveImageUrl } from '../../lib/api';
 import Lightbox from '../ui/Lightbox';
 
 const AUTO_ADVANCE_MS = 5000;
@@ -8,6 +8,32 @@ const SWIPE_THRESHOLD = 40;
 
 function prefersReducedMotion() {
   return typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+// `dark` (alternating card treatment) has no backend equivalent — cycled by position, same
+// convention as the LAYOUTS arrays in Services.jsx/WorkGallery.jsx.
+function backendToTestimonial(t, i) {
+  const project = t.relatedProject;
+  return {
+    id: t._id,
+    quote: `"${t.quote}"`,
+    name: t.name,
+    location: t.location || '',
+    portrait: imgOrFallback(resolveImageUrl(t.portrait?.url), 'portrait,person'),
+    portraitFb: 'portrait,person',
+    rating: t.rating || 5,
+    dark: i % 2 === 1,
+    verified: !!t.isVerified,
+    ariaLabel: project ? `View the ${project.title} installation` : `${t.name}'s review`,
+    // Only projects have install photos — a testimonial not linked to one just isn't
+    // clickable (no "See this install" link rendered, see the JSX below).
+    case: project
+      ? {
+          img: resolveImageUrl(project.image?.url),
+          caption: [project.title, project.location].filter(Boolean).join(' — '),
+        }
+      : null,
+  };
 }
 
 function Stars({ rating }) {
@@ -46,6 +72,7 @@ function QuoteMark({ dark }) {
 }
 
 export default function Testimonials() {
+  const [testimonials, setTestimonials] = useState([]);
   const [openCase, setOpenCase] = useState(null);
   const [index, setIndex] = useState(0);
   const [hovered, setHovered] = useState(false);
@@ -54,15 +81,31 @@ export default function Testimonials() {
   const paused = hovered || manualPause;
 
   useEffect(() => {
-    if (paused || prefersReducedMotion()) return undefined;
+    let cancelled = false;
+    api
+      .get('/testimonials?limit=20&sort=sortOrder')
+      .then((res) => {
+        if (cancelled) return;
+        setTestimonials(res.data.filter((t) => t.isPublished !== false).map(backendToTestimonial));
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (paused || prefersReducedMotion() || testimonials.length < 2) return undefined;
     const t = setInterval(() => {
       setIndex((i) => (i + 1) % testimonials.length);
     }, AUTO_ADVANCE_MS);
     return () => clearInterval(t);
-  }, [paused]);
+  }, [paused, testimonials.length]);
 
   const goPrev = () => setIndex((i) => (i - 1 + testimonials.length) % testimonials.length);
   const goNext = () => setIndex((i) => (i + 1) % testimonials.length);
+
+  if (!testimonials.length) return null;
 
   function onTouchStart(e) {
     touchRef.current = { x: e.touches[0].clientX, active: true };
@@ -98,7 +141,8 @@ export default function Testimonials() {
             style={{ transform: `translateX(-${index * 100}%)` }}
           >
             {testimonials.map((item, i) => {
-              const open = () => setOpenCase(item.case);
+              const clickable = !!item.case;
+              const open = () => item.case && setOpenCase(item.case);
               return (
                 <div
                   key={item.id}
@@ -106,21 +150,27 @@ export default function Testimonials() {
                   aria-hidden={i !== index}
                 >
                   <div
-                    role="button"
-                    tabIndex={i === index ? 0 : -1}
-                    onClick={open}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        open();
-                      }
-                    }}
-                    aria-label={item.ariaLabel}
-                    className={`group relative flex min-h-[276px] cursor-pointer flex-col rounded-[20px] border p-6 transition-[transform,box-shadow,border-color] duration-[400ms] ease-[cubic-bezier(0.2,0.7,0.2,1)] sm:p-7 ${
+                    role={clickable ? 'button' : undefined}
+                    tabIndex={clickable ? (i === index ? 0 : -1) : undefined}
+                    onClick={clickable ? open : undefined}
+                    onKeyDown={
+                      clickable
+                        ? (e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              open();
+                            }
+                          }
+                        : undefined
+                    }
+                    aria-label={clickable ? item.ariaLabel : undefined}
+                    className={`group relative flex min-h-[276px] flex-col rounded-[20px] border p-6 transition-[transform,box-shadow,border-color] duration-[400ms] ease-[cubic-bezier(0.2,0.7,0.2,1)] sm:p-7 ${
+                      clickable ? 'cursor-pointer hover:-translate-y-[4px]' : ''
+                    } ${
                       item.dark
                         ? 'border-transparent bg-dark text-paper shadow-[0_22px_50px_-30px_rgba(23,21,15,0.65)] hover:border-acc/25 hover:shadow-[0_32px_64px_-28px_rgba(23,21,15,0.7)]'
                         : 'border-line bg-[#FBFAF7] shadow-[0_16px_40px_-26px_rgba(23,21,15,0.35)] hover:border-acc/30 hover:shadow-[0_26px_52px_-26px_rgba(23,21,15,0.4)]'
-                    } hover:-translate-y-[4px]`}
+                    }`}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <Stars rating={item.rating} />
@@ -131,9 +181,11 @@ export default function Testimonials() {
                       <p className="m-0 font-sans text-[20px] leading-[1.5] font-medium tracking-[-0.02em] text-pretty">
                         {item.quote}
                       </p>
-                      <span className="inline-flex w-fit items-center gap-[6px] text-[13.5px] font-semibold text-acc transition-transform duration-300 ease-[cubic-bezier(0.2,0.7,0.2,1)] group-hover:translate-x-[3px]">
-                        See this install <span aria-hidden="true">→</span>
-                      </span>
+                      {clickable && (
+                        <span className="inline-flex w-fit items-center gap-[6px] text-[13.5px] font-semibold text-acc transition-transform duration-300 ease-[cubic-bezier(0.2,0.7,0.2,1)] group-hover:translate-x-[3px]">
+                          See this install <span aria-hidden="true">→</span>
+                        </span>
+                      )}
                     </div>
 
                     <div

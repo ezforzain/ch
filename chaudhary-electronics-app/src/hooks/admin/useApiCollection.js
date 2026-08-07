@@ -44,8 +44,20 @@ export function useApiCollection({
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await api.get(`${endpoint}?limit=200&sort=${sort}`);
-      setRows(res.data.map(mapFromApi));
+      // The API caps `limit` at 100 per request (server/src/utils/APIFeatures.js) regardless
+      // of what's asked for — useCollectionTable's search/sort/pagination all run client-side
+      // over whatever `rows` holds, so a single capped fetch would silently hide anything past
+      // the first 100 records. Page through every result instead of trusting one request.
+      const PAGE_SIZE = 100;
+      let page = 1;
+      let all = [];
+      for (;;) {
+        const res = await api.get(`${endpoint}?limit=${PAGE_SIZE}&page=${page}&sort=${sort}`);
+        all = all.concat(res.data);
+        if (!res.meta || page >= res.meta.pages || res.data.length === 0) break;
+        page += 1;
+      }
+      setRows(all.map(mapFromApi));
     } catch (err) {
       console.error(`Failed to load ${endpoint}:`, err);
       showToast('Could not load data from the server — is the backend running?');
@@ -191,7 +203,11 @@ export function useApiCollection({
       bulkArchive,
       bulkSetStatus,
       refetch: load,
+      // Lets CollectionTable hide the bulk Archive/Unarchive buttons for modules like
+      // Leads/Orders/Appointments/Users that only have a status workflow, no archive concept
+      // (no archiveToApi passed in) — without this they were shown but silently did nothing.
+      supportsArchive: !!archiveToApi,
     }),
-    [page, rows, loading, addRecord, editRecord, deleteRecord, duplicateRecord, archiveRecord, bulkDelete, bulkArchive, bulkSetStatus, load],
+    [page, rows, loading, addRecord, editRecord, deleteRecord, duplicateRecord, archiveRecord, bulkDelete, bulkArchive, bulkSetStatus, load, archiveToApi],
   );
 }

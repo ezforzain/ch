@@ -1,11 +1,67 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useLang } from '../../i18n/LangContext';
-import { imgFallback } from '../../lib/format';
-import { services } from '../../data/services';
+import { imgFallback, imgOrFallback } from '../../lib/format';
+import { api, resolveImageUrl } from '../../lib/api';
 import Bi from '../ui/Bi';
+
+const COMPACT_TITLE = 'text-[22px] font-[660] tracking-[-0.028em]';
+const COMPACT_DESC = 'mt-[5px] text-[14px] text-[rgba(245,242,236,0.72)]';
+
+// Presentation-only tile layout (span/height/type sizing) that the backend Service model has
+// no equivalent for — cycled by position (admin-controlled via sortOrder) so the bento grid
+// keeps its varied look regardless of how many services are configured.
+const LAYOUTS = [
+  { span: 2, minH: 340, gradEnd: 0.88, shadow: true, titleClass: 'text-[clamp(24px,2.6vw,32px)] font-semibold tracking-[-0.03em]', descClass: 'mt-[6px] text-[15.5px] text-[rgba(245,242,236,0.78)]' },
+  { span: 1, minH: 340, gradEnd: 0.85, titleClass: COMPACT_TITLE, descClass: COMPACT_DESC },
+  { span: 1, minH: 340, gradEnd: 0.85, titleClass: COMPACT_TITLE, descClass: COMPACT_DESC },
+  { span: 1, minH: 280, gradEnd: 0.85, titleClass: COMPACT_TITLE, descClass: COMPACT_DESC },
+  { span: 1, minH: 280, gradEnd: 0.85, titleClass: COMPACT_TITLE, descClass: COMPACT_DESC },
+  { span: 2, minH: 280, gradEnd: 0.86, titleClass: 'text-[clamp(22px,2.4vw,28px)] font-semibold tracking-[-0.03em]', descClass: 'mt-[5px] text-[15.5px] text-[rgba(245,242,236,0.78)]' },
+  { span: 1, minH: 280, gradEnd: 0.85, titleClass: COMPACT_TITLE, descClass: COMPACT_DESC },
+];
+
+function backendToService(s, i) {
+  const layout = LAYOUTS[i % LAYOUTS.length];
+  return {
+    id: s._id,
+    // No linked-category field exists on the backend Service model to safely derive a
+    // matching /marketplace?category= slug, so route every tile to the quote form instead —
+    // works for any service, unlike a guessed category match that could point at the wrong
+    // (or a nonexistent) marketplace category.
+    href: '#quote',
+    img: imgOrFallback(resolveImageUrl(s.image?.url), 'electronics,service,work'),
+    fb: 'electronics,service,work',
+    alt: s.name,
+    badge: i === 0 ? 'MOST REQUESTED' : null,
+    title: s.name,
+    desc: s.description || '',
+    cost: s.costEstimate || '—',
+    installTime: s.installTime || '—',
+    bestFor: s.bestFor || '—',
+    ...layout,
+  };
+}
 
 export default function Services() {
   const { lang } = useLang();
+  const [services, setServices] = useState([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .get('/services?limit=100&sort=sortOrder')
+      .then((res) => {
+        if (cancelled) return;
+        setServices(res.data.filter((s) => s.isActive !== false).map(backendToService));
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (!services.length) return null;
 
   return (
     <section id="services" className="px-5 py-[clamp(64px,8vw,110px)]">

@@ -9,10 +9,12 @@ function mapFromApi(doc) {
     name: doc.title,
     city: doc.location,
     category: doc.category,
-    // Project has no distinct "status" concept server-side, only isPublished — folds onto
-    // the closest existing option so the table/status pill still reads sensibly.
-    status: doc.isPublished ? 'Completed' : 'Pending',
+    // Fallback for any pre-migration record saved before Project had a `status` field.
+    status: doc.status || (doc.isPublished ? 'Completed' : 'Pending'),
     image: resolveImageUrl(doc.image?.url),
+    // `archived` (public-site visibility) is intentionally independent of `status` (workflow
+    // state) — a project can be "In progress" and already published, or "Completed" and
+    // unpublished.
     archived: !doc.isPublished,
   };
 }
@@ -22,7 +24,7 @@ function mapToApi(draft) {
     title: draft.name,
     location: draft.city,
     category: draft.category,
-    isPublished: draft.status !== undefined ? draft.status !== 'Pending' : undefined,
+    status: draft.status,
   };
 }
 
@@ -34,7 +36,7 @@ export default function ProjectsPage() {
     mapToApi,
     imageFields: [{ formField: 'image', draftKey: 'image' }],
     archiveToApi: (archived) => ({ isPublished: !archived }),
-    statusToApi: (status) => ({ isPublished: status !== 'Pending' }),
+    statusToApi: (status) => ({ status }),
   });
   return <CollectionTable admin={adapter} page="projects" schema={schemas.projects} />;
 }

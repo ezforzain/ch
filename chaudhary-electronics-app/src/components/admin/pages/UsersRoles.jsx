@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import CollectionTable from '../table/CollectionTable';
 import { cardClass } from '../adminStyles';
 import { schemas } from '../../../data/admin/schemas';
 import { defaultPermissions, permModules } from '../../../data/admin/navDefs';
 import { useApiCollection } from '../../../hooks/admin/useApiCollection';
+import { useAuth } from '../../../context/AuthContext';
 import { titleCase, toLowerKey } from '../../../lib/adminMappers';
 
 function mapFromApi(doc) {
@@ -32,7 +33,28 @@ function mapToApi(draft) {
  * per-module permission scheme, not a functional gate). */
 export default function UsersRoles() {
   const [permissions, setPermissions] = useState(defaultPermissions);
-  const adapter = useApiCollection({ page: 'users', endpoint: '/users', mapFromApi, mapToApi });
+  const { user: me } = useAuth();
+  const isSuperadmin = me?.role === 'superadmin';
+  const adapter = useApiCollection({
+    page: 'users',
+    endpoint: '/users',
+    mapFromApi,
+    mapToApi,
+    statusToApi: (status) => ({ isActive: status === 'Active' }),
+  });
+
+  // DELETE /users/:id and granting admin/superadmin are both superadmin-only on the backend
+  // (server/src/controllers/user.controller.js) — don't show a plain admin an action they'd
+  // just get a 403 back for.
+  const liveSchema = useMemo(() => {
+    if (isSuperadmin) return schemas.users;
+    return {
+      ...schemas.users,
+      fields: schemas.users.fields.map((f) =>
+        f.key === 'role' ? { ...f, options: f.options.filter((o) => o !== 'Admin' && o !== 'Superadmin') } : f,
+      ),
+    };
+  }, [isSuperadmin]);
 
   function togglePermission(role, mod) {
     setPermissions((p) => {
@@ -44,7 +66,13 @@ export default function UsersRoles() {
 
   return (
     <div className="flex flex-col gap-3.5">
-      <CollectionTable admin={adapter} page="users" schema={schemas.users} />
+      <CollectionTable
+        admin={adapter}
+        page="users"
+        schema={liveSchema}
+        canDelete={(row) => isSuperadmin && row.id !== me?._id}
+        canBulkDelete={isSuperadmin}
+      />
 
       <div className={cardClass}>
         <div className="mb-1 text-[14.5px] font-bold">Role permissions (preview)</div>

@@ -1,23 +1,78 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useLang } from '../../i18n/LangContext';
-import { imgFallback } from '../../lib/format';
-import { workGallery } from '../../data/workGallery';
+import { imgFallback, imgOrFallback } from '../../lib/format';
+import { api, resolveImageUrl } from '../../lib/api';
 import Bi from '../ui/Bi';
 import Lightbox from '../ui/Lightbox';
 import Modal from '../ui/Modal';
 
 const ALL = 'All';
 
+const CAPTION_LG = 'pt-8 px-[18px] pb-4';
+const CAPTION_MD = 'pt-7 px-[18px] pb-[14px]';
+const CAPTION_SM = 'pt-[26px] px-[14px] pb-3';
+const TITLE_LG = 'text-[17.5px] font-[650]';
+const TITLE_MD = 'text-[16px] font-semibold';
+const TITLE_SM = 'text-[14.5px] font-semibold';
+
+// Presentation-only bento tile sizing the backend Project model has no equivalent for —
+// cycled by position (admin-controlled via sortOrder) same as Services.jsx's LAYOUTS.
+const LAYOUTS = [
+  { colSpan: 2, rowSpan: 3, captionClass: CAPTION_LG, titleClass: TITLE_LG },
+  { colSpan: 2, rowSpan: 2, captionClass: CAPTION_MD, titleClass: TITLE_MD },
+  { colSpan: 1, rowSpan: 2, captionClass: CAPTION_SM, titleClass: TITLE_SM },
+  { colSpan: 1, rowSpan: 2, captionClass: CAPTION_SM, titleClass: TITLE_SM },
+];
+
+function backendToWorkItem(p, i) {
+  const layout = LAYOUTS[i % LAYOUTS.length];
+  return {
+    id: p._id,
+    img: imgOrFallback(resolveImageUrl(p.image?.url), 'solar,electrical,installation'),
+    fb: 'solar,electrical,installation',
+    alt: p.title,
+    title: p.title,
+    subtitle: p.result || '',
+    category: p.category,
+    beforeImg: p.beforeImage?.url ? resolveImageUrl(p.beforeImage.url) : undefined,
+    beforeFb: 'before,site,bare',
+    details: {
+      size: p.size || '—',
+      location: p.location || '—',
+      completion: p.completionTime || '—',
+      savings: p.result || '—',
+    },
+    ...layout,
+  };
+}
+
 export default function WorkGallery() {
   const { lang } = useLang();
   const [openIndex, setOpenIndex] = useState(null);
   const [detailsItem, setDetailsItem] = useState(null);
   const [category, setCategory] = useState(ALL);
+  const [workGallery, setWorkGallery] = useState([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .get('/projects?limit=100&sort=sortOrder')
+      .then((res) => {
+        if (cancelled) return;
+        setWorkGallery(res.data.filter((p) => p.isPublished !== false).map(backendToWorkItem));
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const categories = useMemo(
     () => [ALL, ...Array.from(new Set(workGallery.map((i) => i.category)))],
-    [],
+    [workGallery],
   );
+
+  if (!workGallery.length) return null;
 
   const filtered = category === ALL ? workGallery : workGallery.filter((i) => i.category === category);
   const openItem = openIndex !== null ? filtered[openIndex] : null;

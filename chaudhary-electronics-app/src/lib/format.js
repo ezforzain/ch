@@ -15,6 +15,13 @@ export function imgFallback(terms, seed = 3) {
   };
 }
 
+/** Same fallback pool as imgFallback(), but for API-backed images where the field can be
+ * blank (no upload yet) — an empty src doesn't reliably fire the <img>'s onerror in every
+ * browser, so use this directly as `src` instead of waiting on onError to catch it. */
+export function imgOrFallback(url, terms, seed = 3) {
+  return url || `https://loremflickr.com/1200/800/${terms}?lock=${seed}`;
+}
+
 export function waLink(number, message) {
   return `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
 }

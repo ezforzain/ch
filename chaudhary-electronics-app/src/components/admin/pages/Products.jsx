@@ -31,6 +31,7 @@ export default function Products() {
       bulkDelete: (_page, ids) => store.bulkDeleteProducts(ids),
       bulkArchive: (_page, ids, archived) => store.bulkArchiveProducts(ids, archived),
       bulkSetStatus: (_page, ids, status) => store.bulkSetStatusProducts(ids, status),
+      supportsArchive: true,
     }),
     [store],
   );

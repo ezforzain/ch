@@ -26,7 +26,13 @@ export function useCollectionTable(schema, rows) {
 
   const patch = useCallback((p) => setState((s) => ({ ...s, ...p })), []);
 
-  const statusCol = useMemo(() => schema.columns.find((c) => c.type === 'status') || null, [schema]);
+  // Users & Roles has two `type: 'status'` columns (role, status) so both render as colored
+  // pills — but only one should drive the status filter/bulk-status action. Prefer a column
+  // literally keyed 'status' over any other status-styled column (e.g. 'role').
+  const statusCol = useMemo(
+    () => schema.columns.find((c) => c.type === 'status' && c.key === 'status') || schema.columns.find((c) => c.type === 'status') || null,
+    [schema],
+  );
 
   const statusOptions = useMemo(() => {
     if (!statusCol) return null;

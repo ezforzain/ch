@@ -1,14 +1,39 @@
+import { useEffect, useState } from 'react';
 import { useLang } from '../../i18n/LangContext';
-import { faqs } from '../../data/faq';
+import { api } from '../../lib/api';
 import Bi from '../ui/Bi';
+
+/** No Urdu FAQ copy exists on the backend (single-language `question`/`answer` fields) —
+ * reuse the same string for both languages, same convention as data/catalogue.js. */
+function backendToFaq(f) {
+  return { id: f._id, q: { en: f.question, ur: f.question }, a: { en: f.answer, ur: f.answer } };
+}
 
 /**
  * FAQ / accordion section, mounted in Home.jsx. Uses native <details>/<summary>
  * for accessible, JS-free expand/collapse; Tailwind's `open:` variant drives
- * the chevron rotation and answer reveal.
+ * the chevron rotation and answer reveal. Content is admin-managed (Admin Panel ->
+ * FAQs), fetched live rather than hardcoded so edits there show up here.
  */
 export default function FAQSection() {
   const { lang } = useLang();
+  const [faqs, setFaqs] = useState([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .get('/faqs?limit=100&sort=sortOrder')
+      .then((res) => {
+        if (cancelled) return;
+        setFaqs(res.data.filter((f) => f.isActive !== false).map(backendToFaq));
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (!faqs.length) return null;
 
   return (
     <section id="faq" aria-labelledby="faq-h" className="px-5 py-[clamp(64px,8vw,110px)]">

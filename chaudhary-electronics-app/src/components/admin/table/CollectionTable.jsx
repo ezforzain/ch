@@ -56,7 +56,14 @@ function Cell({ row, col }) {
  * duplicate/archive/delete, appointments get "send reminder"), CSV/Excel
  * export, and (schema.hasCalendar) a List/Calendar toggle.
  */
-export default function CollectionTable({ admin, page: pageProp, schema: schemaProp, renderModal }) {
+export default function CollectionTable({
+  admin,
+  page: pageProp,
+  schema: schemaProp,
+  renderModal,
+  canDelete = () => true,
+  canBulkDelete = true,
+}) {
   const params = useParams();
   const page = pageProp || params.page;
   const schema = schemaProp || schemas[page];
@@ -227,15 +234,21 @@ export default function CollectionTable({ admin, page: pageProp, schema: schemaP
               ))}
             </select>
           )}
-          <button type="button" className={ghostBtnSmallClass} onClick={() => onBulkArchive(true)}>
-            Archive
-          </button>
-          <button type="button" className={ghostBtnSmallClass} onClick={() => onBulkArchive(false)}>
-            Unarchive
-          </button>
-          <button type="button" className={dangerBtnSmallClass} onClick={onBulkDelete}>
-            Delete
-          </button>
+          {admin.supportsArchive !== false && (
+            <>
+              <button type="button" className={ghostBtnSmallClass} onClick={() => onBulkArchive(true)}>
+                Archive
+              </button>
+              <button type="button" className={ghostBtnSmallClass} onClick={() => onBulkArchive(false)}>
+                Unarchive
+              </button>
+            </>
+          )}
+          {canBulkDelete && (
+            <button type="button" className={dangerBtnSmallClass} onClick={onBulkDelete}>
+              Delete
+            </button>
+          )}
           <button type="button" className={`ml-auto ${ghostBtnSmallClass}`} onClick={t.clearSelection}>
             Clear
           </button>
@@ -346,9 +359,11 @@ export default function CollectionTable({ admin, page: pageProp, schema: schemaP
                               ⏰
                             </button>
                           )}
-                          <button type="button" title="Delete" className={rowBtnDangerClass} onClick={() => onDelete(r)}>
-                            ✕
-                          </button>
+                          {canDelete(r) && (
+                            <button type="button" title="Delete" className={rowBtnDangerClass} onClick={() => onDelete(r)}>
+                              ✕
+                            </button>
+                          )}
                         </div>
                       </td>
                     )}
