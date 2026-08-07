@@ -9,7 +9,16 @@ const projectSchema = new mongoose.Schema(
     // Workflow state (independent of `isPublished`, which controls public-site visibility —
     // a project can be "In progress" and already published, or "Completed" and unpublished).
     status: { type: String, enum: ['Completed', 'In progress', 'Pending'], default: 'Completed' },
-    location: { type: String, trim: true, default: '' },
+    // A real City reference (not free text) so the Admin Panel's Cities page can show an
+    // accurate per-city project count instead of a hardcoded 0. The setter lets the admin
+    // form's "not set" option submit '' to clear a previously-picked city — Mongoose's
+    // ObjectId cast rejects '' outright rather than treating it as null like most types do.
+    location: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'City',
+      default: null,
+      set: (v) => (v === '' ? null : v),
+    },
     size: { type: String, trim: true, default: '' }, // e.g. "10 kW Hybrid"
     completionTime: { type: String, trim: true, default: '' },
     result: { type: String, trim: true, default: '' }, // savings / outcome summary
@@ -24,6 +33,6 @@ const projectSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-projectSchema.index({ title: 'text', location: 'text' });
+projectSchema.index({ title: 'text' });
 
 export const Project = mongoose.model('Project', projectSchema);

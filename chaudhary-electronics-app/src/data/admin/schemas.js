@@ -64,7 +64,10 @@ export const schemas = {
     fields: [
       { key: 'name', label: 'Name', type: 'text', required: true },
       { key: 'category', label: 'Category', type: 'select', options: ['Residential', 'Commercial', 'Security'] },
-      { key: 'city', label: 'Location', type: 'text' },
+      // 'options' is intentionally empty — real city names come from the database (City
+      // collection), not a hardcoded list, so ProjectsPage.jsx clones this schema at render
+      // time and injects live options, same pattern as the Products page's 'cat' field.
+      { key: 'city', label: 'City', type: 'select', options: [] },
       { key: 'status', label: 'Status', type: 'select', options: ['Completed', 'In progress', 'Pending'] },
       { key: 'image', label: 'Image', type: 'file', required: true },
     ],

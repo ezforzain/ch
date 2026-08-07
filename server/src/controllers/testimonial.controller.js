@@ -3,7 +3,11 @@ import * as factory from './handlerFactory.js';
 
 const imageOpts = { folder: 'testimonials', fileFields: ['portrait'] };
 
-const relatedProjectPopulate = { path: 'relatedProject', select: 'title image size location completionTime result' };
+const relatedProjectPopulate = {
+  path: 'relatedProject',
+  select: 'title image size location completionTime result',
+  populate: { path: 'location', select: 'name' },
+};
 
 export const getTestimonials = factory.getAll(Testimonial, {
   searchableFields: ['name', 'quote', 'location'],

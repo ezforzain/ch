@@ -30,7 +30,7 @@ function backendToTestimonial(t, i) {
     case: project
       ? {
           img: resolveImageUrl(project.image?.url),
-          caption: [project.title, project.location].filter(Boolean).join(' — '),
+          caption: [project.title, project.location?.name].filter(Boolean).join(' — '),
         }
       : null,
   };

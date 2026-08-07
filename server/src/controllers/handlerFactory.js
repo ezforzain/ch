@@ -53,19 +53,20 @@ export function updateOne(Model, { label, transform } = {}) {
 /** Same as createOne, but pulls one-or-more image fields (multer memoryStorage files)
  * off req.files and stores them via storeImage() before saving — used by every module
  * whose schema has an image (Project, GalleryItem, TeamMember, BlogPost, Testimonial). */
-export function createOneWithImages(Model, { folder, fileFields = ['image'], label } = {}) {
+export function createOneWithImages(Model, { folder, fileFields = ['image'], label, populate = null } = {}) {
   return asyncHandler(async (req, res) => {
     const payload = { ...req.body };
     const files = req.files || {};
     for (const field of fileFields) {
       if (files[field]?.[0]) payload[field] = await storeImage(files[field][0], folder);
     }
-    const doc = await Model.create(payload);
+    let doc = await Model.create(payload);
+    if (populate) doc = await doc.populate(populate);
     sendResponse(res, 201, `${label || Model.modelName} created.`, doc);
   });
 }
 
-export function updateOneWithImages(Model, { folder, fileFields = ['image'], label } = {}) {
+export function updateOneWithImages(Model, { folder, fileFields = ['image'], label, populate = null } = {}) {
   return asyncHandler(async (req, res) => {
     const doc = await Model.findById(req.params.id);
     if (!doc) throw ApiError.notFound(`${label || Model.modelName} not found.`);
@@ -80,6 +81,7 @@ export function updateOneWithImages(Model, { folder, fileFields = ['image'], lab
     }
     Object.assign(doc, payload);
     await doc.save();
+    if (populate) await doc.populate(populate);
     sendResponse(res, 200, `${label || Model.modelName} updated.`, doc);
   });
 }

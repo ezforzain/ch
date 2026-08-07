@@ -38,7 +38,7 @@ function backendToWorkItem(p, i) {
     beforeFb: 'before,site,bare',
     details: {
       size: p.size || '—',
-      location: p.location || '—',
+      location: p.location?.name || '—',
       completion: p.completionTime || '—',
       savings: p.result || '—',
     },
