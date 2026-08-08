@@ -1,10 +1,16 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { LogOut, ShieldCheck } from 'lucide-react';
 import { useLang } from '../../i18n/LangContext';
+import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
+import { resolveImageUrl } from '../../lib/api';
 import { useScrollY } from '../../hooks/useScrollY';
 import { useAutoHideHeader } from '../../hooks/useAutoHideHeader';
 import Bi from '../ui/Bi';
 import QuickSearch from './QuickSearch';
+
+const ADMIN_ROLES = ['admin', 'superadmin'];
 
 // Scroll-spy watches these ids (source: #services/#work/#planner/#products/#quote).
 const SPY_IDS = ['services', 'work', 'planner', 'products', 'quote'];
@@ -32,11 +38,33 @@ const NAV_LINKS = [
 
 export default function Navbar() {
   const { lang, toggleLang } = useLang();
+  const { user, logout } = useAuth();
+  const showToast = useToast();
+  const navigate = useNavigate();
   const scrollY = useScrollY();
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
   const [activeId, setActiveId] = useState(null);
   const [width, setWidth] = useState(() => (typeof window !== 'undefined' ? window.innerWidth : 1440));
+
+  const isAdmin = ADMIN_ROLES.includes(user?.role);
+  const avatarUrl = resolveImageUrl(user?.avatar?.url);
+  const initials = (user?.name || '?')
+    .trim()
+    .split(/\s+/)
+    .map((w) => w.charAt(0))
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+
+  async function handleLogout() {
+    setAccountOpen(false);
+    setMenuOpen(false);
+    await logout();
+    showToast(lang === 'ur' ? 'آپ لاگ آؤٹ ہو گئے ہیں' : 'You have been logged out.');
+    navigate('/login');
+  }
 
   // Scroll-spy: highlight the nav link for whichever watched section is
   // currently crossing the middle band of the viewport.
@@ -93,6 +121,15 @@ export default function Navbar() {
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   }, [menuOpen]);
+
+  useEffect(() => {
+    if (!accountOpen) return undefined;
+    function onKey(e) {
+      if (e.key === 'Escape') setAccountOpen(false);
+    }
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [accountOpen]);
 
   // pill background/shadow scroll transition (source onScroll, lines 1024-1028)
   const solid = scrollY > 40;
@@ -160,6 +197,15 @@ export default function Navbar() {
             >
               <Bi en="Marketplace" ur="مارکیٹ پلیس" />
             </Link>
+            {isAdmin && (
+              <Link
+                to="/admin"
+                className="flex items-center gap-1.5 px-[2px] py-2 text-[15.5px] font-semibold whitespace-nowrap text-mut transition-[color,transform] duration-300 hover:-translate-y-px hover:text-ink"
+              >
+                <ShieldCheck className="h-4 w-4" />
+                <Bi en="Admin Panel" ur="ایڈمن پینل" />
+              </Link>
+            )}
           </div>
         )}
 
@@ -197,6 +243,60 @@ export default function Navbar() {
               اردو
             </span>
           </button>
+
+          {!compact && (
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setAccountOpen((o) => !o)}
+                title={user?.name || 'Account'}
+                aria-label="Account menu"
+                aria-haspopup="true"
+                aria-expanded={accountOpen}
+                className="grid h-12 w-12 flex-shrink-0 place-items-center overflow-hidden rounded-full border border-line bg-white/50 text-[13px] font-bold text-mut transition-[color,box-shadow] duration-250 hover:text-ink hover:shadow-[0_6px_16px_-6px_rgba(23,21,15,0.25)]"
+              >
+                {avatarUrl ? <img src={avatarUrl} alt="" className="h-full w-full object-cover" /> : initials}
+              </button>
+              {accountOpen && (
+                <>
+                  <div
+                    onClick={() => setAccountOpen(false)}
+                    aria-hidden="true"
+                    className="fixed inset-0 z-[950]"
+                  />
+                  <div
+                    role="menu"
+                    aria-label="Account"
+                    className="absolute top-14 right-0 z-[960] min-w-[220px] rounded-[16px] border border-[rgba(23,21,15,0.09)] bg-[rgba(245,242,236,0.98)] p-2 shadow-[0_20px_48px_-18px_rgba(23,21,15,0.35)] [backdrop-filter:blur(16px)]"
+                  >
+                    <div className="border-b border-line px-3 py-2.5">
+                      <div className="truncate text-[13.5px] font-bold text-ink">{user?.name || 'Account'}</div>
+                      <div className="truncate text-[12px] text-mut capitalize">{user?.role}</div>
+                    </div>
+                    {isAdmin && (
+                      <Link
+                        to="/admin"
+                        onClick={() => setAccountOpen(false)}
+                        className="mt-1 flex items-center gap-2 rounded-[10px] px-3 py-2.5 text-[13.5px] font-semibold text-ink transition-colors duration-200 hover:bg-[rgba(23,21,15,0.05)]"
+                      >
+                        <ShieldCheck className="h-4 w-4" />
+                        <Bi en="Admin Panel" ur="ایڈمن پینل" />
+                      </Link>
+                    )}
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={handleLogout}
+                      className="mt-1 flex w-full items-center gap-2 rounded-[10px] px-3 py-2.5 text-left text-[13.5px] font-semibold text-[#C0392B] transition-colors duration-200 hover:bg-[rgba(192,57,43,0.08)]"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      <Bi en="Log out" ur="لاگ آؤٹ" />
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
 
           {!compact && (
             <a
@@ -280,6 +380,17 @@ export default function Navbar() {
               >
                 <Bi en="Marketplace" ur="مارکیٹ پلیس" />
               </Link>
+              {isAdmin && (
+                <Link
+                  to="/admin"
+                  tabIndex={menuOpen ? undefined : -1}
+                  onClick={() => setMenuOpen(false)}
+                  className="flex items-center gap-2 rounded-2xl px-4 py-[15px] text-[16px] font-semibold transition-colors duration-250 hover:bg-[rgba(23,21,15,0.05)] hover:text-ink"
+                >
+                  <ShieldCheck className="h-4 w-4" />
+                  <Bi en="Admin Panel" ur="ایڈمن پینل" />
+                </Link>
+              )}
               <a
                 href="/#quote"
                 tabIndex={menuOpen ? undefined : -1}
@@ -288,6 +399,15 @@ export default function Navbar() {
               >
                 <Bi en="Get a quote" ur="کوٹیشن لیں" />
               </a>
+              <button
+                type="button"
+                tabIndex={menuOpen ? undefined : -1}
+                onClick={handleLogout}
+                className="flex items-center gap-2 rounded-2xl px-4 py-[15px] text-left text-[16px] font-semibold text-[#C0392B] transition-colors duration-250 hover:bg-[rgba(192,57,43,0.08)]"
+              >
+                <LogOut className="h-4 w-4" />
+                <Bi en="Log out" ur="لاگ آؤٹ" />
+              </button>
             </div>
           </div>
         </div>

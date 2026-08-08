@@ -1,13 +1,13 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { useToast } from '../../../context/ToastContext';
-import { api, resolveImageUrl, ApiRequestError } from '../../../lib/api';
+import { resolveImageUrl, ApiRequestError } from '../../../lib/api';
 import { cardClass, primaryBtnClass } from '../adminStyles';
 
 /** /admin/profile — the admin's own account info + avatar, and a change-password form.
  * Reachable from the Header's profile dropdown (previously a "coming soon" toast). */
 export default function Profile() {
-  const { user, refreshMe } = useAuth();
+  const { user, updateProfile } = useAuth();
   const showToast = useToast();
 
   const [name, setName] = useState(user?.name || '');
@@ -15,6 +15,13 @@ export default function Profile() {
   const [avatarPreview, setAvatarPreview] = useState(resolveImageUrl(user?.avatar?.url));
   const [avatarFile, setAvatarFile] = useState(null);
   const [savingProfile, setSavingProfile] = useState(false);
+  // Tracks the local blob: URL from onAvatarChange so it can be revoked once it's no longer
+  // shown — createObjectURL leaks memory if left un-revoked for the life of the tab.
+  const objectUrlRef = useRef(null);
+
+  useEffect(() => () => {
+    if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
+  }, []);
 
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -24,23 +31,43 @@ export default function Profile() {
   function onAvatarChange(e) {
     const file = e.target.files[0];
     if (!file) return;
+    if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
+    const localUrl = URL.createObjectURL(file);
+    objectUrlRef.current = localUrl;
     setAvatarFile(file);
-    setAvatarPreview(URL.createObjectURL(file));
+    setAvatarPreview(localUrl);
   }
 
   async function saveProfile(e) {
     e.preventDefault();
+    if (savingProfile) return; // belt-and-suspenders against double-submit alongside the disabled button
     setSavingProfile(true);
     try {
       const fd = new FormData();
       fd.append('name', name);
       fd.append('phone', phone);
       if (avatarFile) fd.append('avatar', avatarFile);
-      await api.patch('/users/me', fd, { isForm: true });
-      await refreshMe();
+      const updated = await updateProfile(fd);
+      // Swap the local blob: preview for the real, persisted URL now that the server has it —
+      // keeps this preview in sync with what every other avatar in the app (navbar, account
+      // menu) is now showing off the same AuthContext user.
+      if (objectUrlRef.current) {
+        URL.revokeObjectURL(objectUrlRef.current);
+        objectUrlRef.current = null;
+      }
+      setAvatarPreview(resolveImageUrl(updated.avatar?.url));
+      setAvatarFile(null);
       showToast('Profile updated.');
     } catch (err) {
-      showToast(err.message || 'Could not update profile.');
+      // Upload/save failed — never leave a broken/half-applied image showing. Revert to
+      // whatever the server still has (the old photo), not the rejected local preview.
+      if (objectUrlRef.current) {
+        URL.revokeObjectURL(objectUrlRef.current);
+        objectUrlRef.current = null;
+      }
+      setAvatarFile(null);
+      setAvatarPreview(resolveImageUrl(user?.avatar?.url));
+      showToast(err instanceof ApiRequestError ? err.message : 'Could not update profile. Please try again.');
     } finally {
       setSavingProfile(false);
     }
@@ -78,9 +105,11 @@ export default function Profile() {
               (user?.name || '?').charAt(0).toUpperCase()
             )}
           </span>
-          <label className="cursor-pointer rounded-[10px] border border-[var(--a-line)] bg-[var(--a-paper)] px-3.5 py-2 text-[12.5px] font-semibold text-[var(--a-ink)]">
-            Change photo
-            <input type="file" accept="image/*" onChange={onAvatarChange} className="hidden" />
+          <label
+            className={`cursor-pointer rounded-[10px] border border-[var(--a-line)] bg-[var(--a-paper)] px-3.5 py-2 text-[12.5px] font-semibold text-[var(--a-ink)] ${savingProfile ? 'pointer-events-none opacity-60' : ''}`}
+          >
+            {savingProfile ? 'Uploading…' : 'Change photo'}
+            <input type="file" accept="image/*" onChange={onAvatarChange} disabled={savingProfile} className="hidden" />
           </label>
         </div>
 

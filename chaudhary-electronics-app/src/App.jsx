@@ -49,7 +49,16 @@ export default function App() {
               <BrowserRouter>
                 <ScrollToHash />
                 <Routes>
-                  <Route element={<PublicLayout />}>
+                  {/* The whole public site (Home, Marketplace, product pages, Privacy/Terms) requires
+                      being signed in — an unauthenticated visitor is bounced to /login before any of
+                      it renders, so Login is genuinely the first screen the site shows. */}
+                  <Route
+                    element={
+                      <ProtectedRoute>
+                        <PublicLayout />
+                      </ProtectedRoute>
+                    }
+                  >
                     <Route path="/" element={<Home />} />
                     <Route path="/marketplace" element={<Marketplace />} />
                     <Route path="/product/:id" element={<ProductDetail />} />

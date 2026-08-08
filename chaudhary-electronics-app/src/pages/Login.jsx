@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { AlertCircle, Check, Eye, EyeOff, Loader2, Lock, Mail } from 'lucide-react';
 import { useLang } from '../i18n/LangContext';
 import { useToast } from '../context/ToastContext';
@@ -38,7 +38,7 @@ export default function Login() {
   const { lang } = useLang();
   const showToast = useToast();
   const navigate = useNavigate();
-  const { login, loginWithGoogle } = useAuth();
+  const { user, loading, login, loginWithGoogle } = useAuth();
 
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
@@ -52,6 +52,12 @@ export default function Login() {
   const redirectTimer = useRef(null);
 
   useEffect(() => () => clearTimeout(redirectTimer.current), []);
+
+  // Already signed in (e.g. a page refresh with a live session) — skip the form
+  // entirely instead of asking someone to log in twice.
+  if (!loading && user && !success) {
+    return <Navigate to={redirectPathForRole(user.role)} replace />;
+  }
 
   function fieldError(name, values) {
     if (name === 'identifier') {

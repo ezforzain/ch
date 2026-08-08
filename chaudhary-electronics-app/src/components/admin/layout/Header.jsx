@@ -5,6 +5,7 @@ import { useAdminTheme } from '../../../context/admin/AdminThemeContext';
 import { useAuth } from '../../../context/AuthContext';
 import { useHeaderCounts } from '../../../hooks/admin/useHeaderCounts';
 import { navDefs } from '../../../data/admin/navDefs';
+import { resolveImageUrl } from '../../../lib/api';
 
 const iconBtnClass =
   'grid h-9 w-9 flex-shrink-0 cursor-pointer place-items-center rounded-[10px] border border-[var(--a-line)] bg-[var(--a-white)] text-[15px] text-[var(--a-ink)]';
@@ -55,6 +56,7 @@ export default function Header() {
     .join('')
     .slice(0, 2)
     .toUpperCase();
+  const avatarUrl = resolveImageUrl(user?.avatar?.url);
 
   const [dropdown, setDropdown] = useState(null); // null | 'notif' | 'messages' | 'profile'
   const [globalSearch, setGlobalSearch] = useState('');
@@ -206,9 +208,9 @@ export default function Header() {
             aria-haspopup="true"
             aria-expanded={dropdown === 'profile'}
             aria-label="Profile menu"
-            className="grid h-8 w-8 cursor-pointer place-items-center rounded-full border-none bg-[var(--a-dark)] text-[12px] font-bold text-[#F5F2EC]"
+            className="grid h-8 w-8 cursor-pointer place-items-center overflow-hidden rounded-full border-none bg-[var(--a-dark)] text-[12px] font-bold text-[#F5F2EC]"
           >
-            {initials}
+            {avatarUrl ? <img src={avatarUrl} alt="" className="h-full w-full object-cover" /> : initials}
           </button>
           {dropdown === 'profile' && (
             <div role="menu" aria-label="Profile" className={dropdownClass}>

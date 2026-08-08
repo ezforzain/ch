@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
-import { api, resolveImageUrl } from '../../lib/api';
+import { resolveImageUrl, ApiRequestError } from '../../lib/api';
 import { cardClass, inputClass, primaryBtnClass } from '../../components/admin/adminStyles';
 
 const STATUS_LABELS = { pending: 'Pending review', approved: 'Approved', rejected: 'Rejected', suspended: 'Suspended' };
@@ -15,7 +15,7 @@ const STATUS_LABELS = { pending: 'Pending review', approved: 'Approved', rejecte
  * against an endpoint that doesn't exist yet.
  */
 export default function SellerSettings() {
-  const { user, refreshMe } = useAuth();
+  const { user, updateProfile } = useAuth();
   const showToast = useToast();
 
   const [name, setName] = useState(user?.name || '');
@@ -23,14 +23,23 @@ export default function SellerSettings() {
   const [avatarFile, setAvatarFile] = useState(null);
   const [avatarPreview, setAvatarPreview] = useState(resolveImageUrl(user?.avatar?.url));
   const [saving, setSaving] = useState(false);
+  // Tracks the local blob: URL from onAvatarChange so it can be revoked once no longer shown.
+  const objectUrlRef = useRef(null);
+
+  useEffect(() => () => {
+    if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
+  }, []);
 
   const sellerProfile = user?.sellerProfile || {};
 
   function onAvatarChange(e) {
     const file = e.target.files[0];
     if (!file) return;
+    if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
+    const localUrl = URL.createObjectURL(file);
+    objectUrlRef.current = localUrl;
     setAvatarFile(file);
-    setAvatarPreview(URL.createObjectURL(file));
+    setAvatarPreview(localUrl);
   }
 
   async function handleSave(e) {
@@ -42,11 +51,27 @@ export default function SellerSettings() {
       fd.append('name', name);
       fd.append('phone', phone);
       if (avatarFile) fd.append('avatar', avatarFile);
-      await api.patch('/users/me', fd, { isForm: true });
-      await refreshMe();
+      // Applies straight from this request's own response — the previous version made a
+      // second /auth/me call afterwards, and if that second call ever failed the avatar had
+      // already been saved server-side but the UI kept showing the old photo until the next
+      // full refresh/login.
+      const updated = await updateProfile(fd);
+      if (objectUrlRef.current) {
+        URL.revokeObjectURL(objectUrlRef.current);
+        objectUrlRef.current = null;
+      }
+      setAvatarPreview(resolveImageUrl(updated.avatar?.url));
+      setAvatarFile(null);
       showToast('Profile updated.');
     } catch (err) {
-      showToast(err.message || 'Could not update your profile.');
+      // Failed — keep the old photo, don't leave the rejected local preview showing.
+      if (objectUrlRef.current) {
+        URL.revokeObjectURL(objectUrlRef.current);
+        objectUrlRef.current = null;
+      }
+      setAvatarFile(null);
+      setAvatarPreview(resolveImageUrl(user?.avatar?.url));
+      showToast(err instanceof ApiRequestError ? err.message : 'Could not update your profile. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -70,9 +95,11 @@ export default function SellerSettings() {
                 .toUpperCase()
             )}
           </span>
-          <label className="grid h-10 w-fit cursor-pointer place-items-center rounded-[10px] border border-[var(--a-line)] bg-[var(--a-white)] px-4 text-[12.5px] font-semibold text-[var(--a-ink)]">
-            Change photo
-            <input type="file" accept="image/*" onChange={onAvatarChange} className="hidden" />
+          <label
+            className={`grid h-10 w-fit cursor-pointer place-items-center rounded-[10px] border border-[var(--a-line)] bg-[var(--a-white)] px-4 text-[12.5px] font-semibold text-[var(--a-ink)] ${saving ? 'pointer-events-none opacity-60' : ''}`}
+          >
+            {saving ? 'Uploading…' : 'Change photo'}
+            <input type="file" accept="image/*" onChange={onAvatarChange} disabled={saving} className="hidden" />
           </label>
         </div>
 

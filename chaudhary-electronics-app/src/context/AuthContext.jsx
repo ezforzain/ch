@@ -80,9 +80,29 @@ export function AuthProvider({ children }) {
     return res.data.user;
   }, []);
 
+  // Self-service profile update (name/phone/avatar — see server's PATCH /users/me). Applies
+  // the PATCH response to auth state directly instead of a separate /auth/me round trip: that
+  // extra request was a second point of failure that could leave a successful avatar upload
+  // stuck showing the old photo until the next full refresh/login if it ever hiccuped.
+  const updateProfile = useCallback(async (formData) => {
+    const res = await api.patch('/users/me', formData, { isForm: true });
+    setUser(res.data.user);
+    return res.data.user;
+  }, []);
+
   const value = useMemo(
-    () => ({ user, loading, isAuthenticated: !!user, login, loginWithGoogle, register, logout, refreshMe }),
-    [user, loading, login, loginWithGoogle, register, logout, refreshMe],
+    () => ({
+      user,
+      loading,
+      isAuthenticated: !!user,
+      login,
+      loginWithGoogle,
+      register,
+      logout,
+      refreshMe,
+      updateProfile,
+    }),
+    [user, loading, login, loginWithGoogle, register, logout, refreshMe, updateProfile],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -94,11 +114,12 @@ export function useAuth() {
   return ctx;
 }
 
-/** Where to send a user right after login/register, based on role. */
+/** Where to send a user right after login/register, based on role. Customers, admins, and
+ * superadmins all land on the Marketplace first — admins reach the Admin Panel from the
+ * navbar link instead of being dropped straight into it (see Navbar.jsx). */
 export function redirectPathForRole(role) {
-  if (['admin', 'superadmin'].includes(role)) return '/admin';
   if (role === 'seller') return '/seller';
-  return '/'; // customer/buyer
+  return '/marketplace';
 }
 
 export { ApiRequestError };

@@ -74,7 +74,9 @@ export const updateMe = asyncHandler(async (req, res) => {
   }
 
   const user = await User.findByIdAndUpdate(req.user._id, update, { new: true, runValidators: true });
-  sendResponse(res, 200, 'Profile updated.', user);
+  // Same { user } envelope as /auth/me, /auth/login, etc. — callers (AuthContext.updateProfile)
+  // apply this response straight to auth state without a second round trip to /auth/me.
+  sendResponse(res, 200, 'Profile updated.', { user: user.toSafeJSON() });
 });
 
 // @route  POST /api/v1/users/me/addresses
