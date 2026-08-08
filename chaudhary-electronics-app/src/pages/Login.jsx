@@ -30,7 +30,7 @@ function GoogleGlyph() {
  * Standalone, minimal login route — no full site chrome (Navbar/Footer) so the
  * form stays the sole focus, a common pattern for auth pages. Sign-in calls the
  * real backend (server/src/controllers/auth.controller.js). "Continue with Google" is
- * real too when VITE_GOOGLE_CLIENT_ID is configured (see GoogleSignInButton.jsx) — it
+ * real too when Firebase is configured (see GoogleSignInButton.jsx / src/lib/firebase.js) — it
  * falls back to a "coming soon" placeholder when it isn't, rather than pretending to
  * work. "Create account" links to the real /register page.
  */

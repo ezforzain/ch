@@ -14,13 +14,15 @@ import ProductDetail from './pages/ProductDetail';
 import Privacy from './pages/Privacy';
 import Terms from './pages/Terms';
 import NotFound from './pages/NotFound';
-import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 
 const AdminApp = lazy(() => import('./pages/admin/AdminApp'));
 const SellerApp = lazy(() => import('./pages/seller/SellerApp'));
+// Lazy so the Firebase SDK it pulls in (via GoogleSignInButton.jsx) only ever loads for
+// someone actually visiting /login, not bundled into every page's initial load.
+const Login = lazy(() => import('./pages/Login'));
 
 /**
  * One router for the whole site. Public pages (Home, Marketplace, Product Details,
@@ -56,7 +58,14 @@ export default function App() {
                     <Route path="*" element={<NotFound />} />
                   </Route>
 
-                  <Route path="/login" element={<Login />} />
+                  <Route
+                    path="/login"
+                    element={
+                      <Suspense fallback={<PanelLoading label="Loading…" />}>
+                        <Login />
+                      </Suspense>
+                    }
+                  />
                   <Route path="/register" element={<Register />} />
                   <Route path="/forgot-password" element={<ForgotPassword />} />
                   <Route path="/reset-password" element={<ResetPassword />} />

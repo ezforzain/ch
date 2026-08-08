@@ -1,85 +1,75 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
+import { Loader2 } from 'lucide-react';
+import { isFirebaseConfigured, signInWithGooglePopup } from '../../lib/firebase';
+import { Button } from '../ui/button';
+import Bi from '../ui/Bi';
 
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+/** Whether Google sign-in is actually usable — Login.jsx uses this to decide between
+ * rendering this button or a "coming soon" placeholder. */
+export const isGoogleSignInConfigured = isFirebaseConfigured;
 
-/** Whether a real Google OAuth Client ID is configured — Login.jsx uses this to decide
- * between rendering the real button below or falling back to a "coming soon" placeholder. */
-export const isGoogleSignInConfigured = Boolean(GOOGLE_CLIENT_ID);
+function GoogleGlyph() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
+      <path fill="#4285F4" d="M45.12 24.5c0-1.56-.14-3.06-.4-4.5H24v8.51h11.84c-.51 2.75-2.06 5.08-4.39 6.64v5.52h7.11c4.16-3.83 6.56-9.47 6.56-16.17z" />
+      <path fill="#34A853" d="M24 46c5.94 0 10.92-1.97 14.56-5.33l-7.11-5.52c-1.97 1.32-4.49 2.1-7.45 2.1-5.73 0-10.58-3.87-12.31-9.07H4.34v5.7C7.96 41.07 15.4 46 24 46z" />
+      <path fill="#FBBC05" d="M11.69 28.18A13.86 13.86 0 0 1 10.94 24c0-1.45.25-2.86.7-4.18v-5.7H4.34A21.93 21.93 0 0 0 2 24c0 3.55.85 6.9 2.34 9.88z" />
+      <path fill="#EA4335" d="M24 10.75c3.23 0 6.13 1.11 8.41 3.29l6.31-6.31C34.91 4.18 29.93 2 24 2 15.4 2 7.96 6.93 4.34 14.12l7.35 5.7c1.73-5.2 6.58-9.07 12.31-9.07z" />
+    </svg>
+  );
+}
 
-let scriptPromise = null;
-/** Loads Google Identity Services once and shares the same promise across every mount
- * (e.g. Login and Register both rendering this component) instead of injecting the
- * script tag more than once. */
-function loadGoogleScript() {
-  if (!scriptPromise) {
-    scriptPromise = new Promise((resolve, reject) => {
-      if (window.google?.accounts?.id) return resolve();
-      const script = document.createElement('script');
-      script.src = 'https://accounts.google.com/gsi/client';
-      script.async = true;
-      script.defer = true;
-      script.onload = resolve;
-      script.onerror = () => reject(new Error('Failed to load Google Identity Services'));
-      document.head.appendChild(script);
-    });
+// Firebase's raw error codes ("auth/popup-closed-by-user") are never shown to the user — the
+// two codes here fire when the user closes/interrupts the popup themselves, which isn't a
+// real error (they didn't do anything wrong), so those produce no message at all rather than
+// an alarming one.
+const SILENT_CODES = new Set(['auth/popup-closed-by-user', 'auth/cancelled-popup-request']);
+
+function friendlyGoogleError(err) {
+  if (SILENT_CODES.has(err?.code)) return null;
+  if (err?.code === 'auth/popup-blocked') {
+    return 'Your browser blocked the Google sign-in popup — please allow popups for this site and try again.';
   }
-  return scriptPromise;
+  if (err?.code === 'auth/network-request-failed') {
+    return 'Could not reach Google. Check your connection and try again.';
+  }
+  return 'Could not sign in with Google. Please try again.';
 }
 
 /**
- * Renders Google's own "Sign in with Google" button (via Google Identity Services) rather
- * than a custom-styled lookalike — GSI only hands back a usable credential through its own
- * rendered button/prompt, and Google's branding terms don't allow a fully custom reskin
- * anyway. Themed (outline/pill/large) to sit as close to the site's own button style as
- * Google allows. Renders nothing if VITE_GOOGLE_CLIENT_ID isn't set.
+ * "Continue with Google" button backed by Firebase Authentication (see src/lib/firebase.js) —
+ * opens the Google account picker in a popup, then hands the resulting Google ID token to
+ * `onCredential`, exactly like the old Google-Identity-Services version did. Login.jsx's
+ * handling of that token (POST to the real backend, session, redirect) is unchanged.
  *
- * `onCredential(idToken)` receives Google's signed ID token — hand it to
- * `useAuth().loginWithGoogle()`, which POSTs it to the real backend for verification.
+ * Styled as a plain Button (not Google's own rendered widget, which Firebase's popup flow
+ * doesn't require) so it's visually identical to the "coming soon" placeholder Login.jsx
+ * falls back to when this isn't configured — configuring Firebase doesn't change how the
+ * page looks, only whether the button actually works.
  */
 export default function GoogleSignInButton({ onCredential, onError, disabled }) {
-  const containerRef = useRef(null);
-  const [ready, setReady] = useState(false);
+  const [signingIn, setSigningIn] = useState(false);
 
-  useEffect(() => {
-    if (!GOOGLE_CLIENT_ID) return undefined;
-    let cancelled = false;
-    loadGoogleScript()
-      .then(() => {
-        if (cancelled) return;
-        window.google.accounts.id.initialize({
-          client_id: GOOGLE_CLIENT_ID,
-          callback: (response) => onCredential(response.credential),
-        });
-        setReady(true);
-      })
-      .catch(() => onError?.('Could not load Google sign-in. Please check your connection and try again.'));
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  if (!isFirebaseConfigured) return null;
 
-  useEffect(() => {
-    if (!ready || !containerRef.current) return;
-    containerRef.current.innerHTML = '';
-    window.google.accounts.id.renderButton(containerRef.current, {
-      type: 'standard',
-      theme: 'outline',
-      size: 'large',
-      shape: 'pill',
-      text: 'continue_with',
-      logo_alignment: 'left',
-      width: containerRef.current.offsetWidth || 320,
-    });
-  }, [ready]);
-
-  if (!GOOGLE_CLIENT_ID) return null;
+  async function handleClick() {
+    if (signingIn || disabled) return; // belt-and-suspenders against double-clicks/concurrent popups
+    setSigningIn(true);
+    try {
+      const idToken = await signInWithGooglePopup();
+      onCredential(idToken);
+    } catch (err) {
+      const message = friendlyGoogleError(err);
+      if (message) onError?.(message);
+    } finally {
+      setSigningIn(false);
+    }
+  }
 
   return (
-    <div
-      ref={containerRef}
-      aria-disabled={disabled || undefined}
-      className={`flex w-full justify-center [&>div]:w-full ${disabled ? 'pointer-events-none opacity-60' : ''}`}
-    />
+    <Button type="button" variant="outline" size="lg" className="w-full" disabled={disabled || signingIn} onClick={handleClick}>
+      {signingIn ? <Loader2 className="h-[18px] w-[18px] animate-spin" /> : <GoogleGlyph />}
+      <Bi en={signingIn ? 'Signing in…' : 'Continue with Google'} ur={signingIn ? 'سائن ان ہو رہا ہے…' : 'گوگل سے جاری رکھیں'} />
+    </Button>
   );
 }
