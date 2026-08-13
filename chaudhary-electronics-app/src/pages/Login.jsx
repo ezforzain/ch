@@ -100,19 +100,37 @@ export default function Login() {
   async function handleSubmit(e) {
     e.preventDefault();
     if (submitting || success) return;
+    // Some Android WebViews (this OEM's autofill in particular) set an <input>'s value straight
+    // from a saved-password suggestion without dispatching the input/change event React's
+    // onChange relies on — the field visibly shows the password, but `identifier`/`password`
+    // state never picks it up, so "Enter your password" fires despite it looking filled in.
+    // Reading the live DOM values here guarantees submit always uses what's actually in the
+    // fields, autofilled or typed, without needing to special-case every autofill mechanism.
+    const liveIdentifier = e.target.elements['login-id']?.value ?? identifier;
+    const livePassword = e.target.elements['login-password']?.value ?? password;
+    if (liveIdentifier !== identifier) setIdentifier(liveIdentifier);
+    if (livePassword !== password) setPassword(livePassword);
     setTouched({ identifier: true, password: true });
-    if (!validateAll({ identifier, password })) {
+    if (!validateAll({ identifier: liveIdentifier, password: livePassword })) {
       showToast(lang === 'ur' ? 'براہ کرم درج شدہ خانوں کو درست کریں' : 'Please fix the highlighted fields');
       return;
     }
     setFormError('');
     setSubmitting(true);
     try {
-      const user = await login(identifier.trim(), password);
+      const user = await login(liveIdentifier.trim(), livePassword);
+      // Login itself is done the moment this resolves — `submitting` must not stay true
+      // waiting on the redirect below, or any failure in that unrelated step (e.g. a
+      // throwing navigate()) would leave the button spinning forever with no way out.
+      setSubmitting(false);
       setSuccess(true);
       showToast(lang === 'ur' ? 'خوش آمدید! سائن ان کامیاب رہا۔' : 'Welcome back — signed in successfully.');
       redirectTimer.current = setTimeout(() => {
-        navigate(redirectPathForRole(user.role));
+        try {
+          navigate(redirectPathForRole(user?.role));
+        } catch (navErr) {
+          if (import.meta.env.DEV) console.error('[Login] redirect failed:', navErr);
+        }
       }, SUCCESS_REDIRECT_DELAY_MS);
     } catch (err) {
       // Never surface raw fetch/CORS/network errors — only the friendly server
@@ -135,10 +153,18 @@ export default function Login() {
     setSubmitting(true);
     try {
       const user = await loginWithGoogle(idToken);
+      // Same reasoning as handleSubmit above — the Google sign-in itself already succeeded
+      // here, so `submitting` (and the spinner it drives) must be cleared right away rather
+      // than staying tied to the unrelated redirect step that follows.
+      setSubmitting(false);
       setSuccess(true);
       showToast(lang === 'ur' ? 'خوش آمدید! سائن ان کامیاب رہا۔' : 'Welcome back — signed in successfully.');
       redirectTimer.current = setTimeout(() => {
-        navigate(redirectPathForRole(user.role));
+        try {
+          navigate(redirectPathForRole(user?.role));
+        } catch (navErr) {
+          if (import.meta.env.DEV) console.error('[Login] redirect failed:', navErr);
+        }
       }, SUCCESS_REDIRECT_DELAY_MS);
     } catch (err) {
       const message =

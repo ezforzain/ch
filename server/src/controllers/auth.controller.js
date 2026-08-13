@@ -126,7 +126,10 @@ export const login = asyncHandler(async (req, res) => {
 // @route  POST /api/v1/auth/logout
 // @access Public (clears whatever cookie is present)
 export const logout = asyncHandler(async (req, res) => {
-  res.clearCookie('refreshToken', { path: '/api/v1/auth' });
+  // Must match the attributes issueTokenPair() set the cookie with (see generateTokens.js) —
+  // browsers only clear a cookie when path/secure/sameSite line up with how it was set.
+  const secure = env.nodeEnv === 'production';
+  res.clearCookie('refreshToken', { path: '/api/v1/auth', secure, sameSite: secure ? 'none' : 'lax' });
   sendResponse(res, 200, 'Logged out successfully.');
 });
 

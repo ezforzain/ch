@@ -6,6 +6,7 @@ import { AuthProvider } from './context/AuthContext';
 import { ProductsProvider } from './context/ProductsContext';
 import { CartProvider } from './context/CartContext';
 import ScrollToHash from './components/ScrollToHash';
+import AndroidBackButton from './components/AndroidBackButton';
 import ProtectedRoute from './components/routing/ProtectedRoute';
 import PublicLayout from './components/layout/PublicLayout';
 import Home from './pages/Home';
@@ -48,6 +49,7 @@ export default function App() {
             <CartProvider>
               <BrowserRouter>
                 <ScrollToHash />
+                <AndroidBackButton />
                 <Routes>
                   {/* The whole public site (Home, Marketplace, product pages, Privacy/Terms) requires
                       being signed in — an unauthenticated visitor is bounced to /login before any of

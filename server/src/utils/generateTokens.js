@@ -28,10 +28,17 @@ export function issueTokenPair(res, user) {
   const accessToken = signAccessToken(user);
   const refreshToken = signRefreshToken(user);
 
+  const secure = process.env.NODE_ENV === 'production';
   res.cookie('refreshToken', refreshToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    secure,
+    // 'none' is required for the cookie to survive a cross-site request at all — and that's
+    // exactly what every real deployment of this app is: the Vercel frontend and Render backend
+    // are different registrable domains, and so is the Android app (served from Capacitor's own
+    // `https://localhost`) talking to any real API host. Browsers only accept SameSite=None
+    // over HTTPS, hence gating it on `secure` — in local dev (plain HTTP, same-site localhost
+    // ports) 'lax' is both sufficient and the only option that actually works.
+    sameSite: secure ? 'none' : 'lax',
     path: '/api/v1/auth',
     maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days — keep in sync with JWT_REFRESH_EXPIRES_IN default
   });

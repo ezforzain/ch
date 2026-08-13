@@ -1,8 +1,28 @@
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
+import { FirebaseAuthentication } from '@capacitor-firebase/authentication';
 import { isFirebaseConfigured, signInWithGooglePopup } from '../../lib/firebase';
 import { Button } from '../ui/button';
 import Bi from '../ui/Bi';
+
+// A browser popup (signInWithGooglePopup) doesn't work inside Android's WebView — there's no
+// real second window for Google's account picker to open in. On native platforms this uses
+// @capacitor-firebase/authentication instead, which drives Android's native Google Sign-In
+// sheet via the app's google-services.json (see android/README-google-signin.md). Either path
+// ends in the same place: a Google-issued ID token handed to onCredential exactly as before —
+// Login.jsx's handling of it (POST to the real backend, session, redirect) never changes.
+const isNative = Capacitor.isNativePlatform();
+
+async function signInWithGoogleNative() {
+  const result = await FirebaseAuthentication.signInWithGoogle();
+  const idToken = result?.credential?.idToken;
+  if (!idToken) throw new Error('missing-id-token');
+  // Mirror the web flow: don't leave a second, unused "signed in" copy sitting in native
+  // Firebase Auth once we have the token — this app's real session is the backend-issued one.
+  await FirebaseAuthentication.signOut().catch(() => {});
+  return idToken;
+}
 
 /** Whether Google sign-in is actually usable — Login.jsx uses this to decide between
  * rendering this button or a "coming soon" placeholder. */
@@ -24,9 +44,13 @@ function GoogleGlyph() {
 // real error (they didn't do anything wrong), so those produce no message at all rather than
 // an alarming one.
 const SILENT_CODES = new Set(['auth/popup-closed-by-user', 'auth/cancelled-popup-request']);
+// The native plugin doesn't use Firebase's auth/* error codes — Android reports a dismissed
+// sign-in sheet as a plain "canceled" message instead, so this is matched on text.
+const SILENT_MESSAGE_RE = /cancel/i;
 
 function friendlyGoogleError(err) {
   if (SILENT_CODES.has(err?.code)) return null;
+  if (SILENT_MESSAGE_RE.test(err?.message || '')) return null;
   if (err?.code === 'auth/popup-blocked') {
     return 'Your browser blocked the Google sign-in popup — please allow popups for this site and try again.';
   }
@@ -56,8 +80,11 @@ export default function GoogleSignInButton({ onCredential, onError, disabled }) 
     if (signingIn || disabled) return; // belt-and-suspenders against double-clicks/concurrent popups
     setSigningIn(true);
     try {
-      const idToken = await signInWithGooglePopup();
-      onCredential(idToken);
+      const idToken = isNative ? await signInWithGoogleNative() : await signInWithGooglePopup();
+      // Awaited (not fire-and-forget) so this button's own spinner stays accurate for the
+      // full flow, and so a throw from onCredential's handling of the token is caught below
+      // instead of becoming a silent unhandled rejection.
+      await onCredential(idToken);
     } catch (err) {
       const message = friendlyGoogleError(err);
       if (message) onError?.(message);
