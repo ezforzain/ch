@@ -5,6 +5,7 @@ import { useToast } from '../../context/ToastContext';
 import { useCart } from '../../context/CartContext';
 import { slugifyCategory } from '../../data/catalogue';
 import { useProducts } from '../../context/ProductsContext';
+import { useLocalStorage } from '../../hooks/useLocalStorage';
 import ProductCard from './ProductCard';
 import CartDrawer from './CartDrawer';
 import CompareModal from './CompareModal';
@@ -97,7 +98,34 @@ export default function MarketplaceSection() {
 
   const [sheet, setSheet] = useState(null); // 'drawer' | 'compare' | null
   const [drawerKind, setDrawerKind] = useState('cart'); // 'cart' | 'wish'
-  const [compare, setCompare] = useState([]); // [id] — not persisted, matches source
+
+  // Persisted the same way Cart/Wishlist are (see CartContext.jsx) — kept local to this
+  // component rather than lifted into a context since nothing outside the marketplace grid
+  // reads/writes it, but it now survives a refresh via localStorage['compareProducts'].
+  const onCompareStorageError = useCallback(
+    () => showToast("Your browser blocked local storage — your comparison list won't be saved after you leave."),
+    [showToast],
+  );
+  const [rawCompare, setCompare] = useLocalStorage('compareProducts', [], onCompareStorageError); // [id]
+  // useLocalStorage only guards against unparsable JSON — a same-key value that parsed fine
+  // but isn't actually an id array (hand-edited devtools storage, a future format change,
+  // etc.) still needs to fall back to [] here rather than crash every .map/.indexOf below.
+  const compare = Array.isArray(rawCompare) ? rawCompare : [];
+
+  // One-time cleanup of whatever was loaded from storage: drop non-string/empty entries,
+  // dedupe, and reapply the same 3-product cap toggleCompare enforces going forward — never
+  // keyed off `findById`/product load state, since that races the still-loading catalogue
+  // fetch and would otherwise wipe a perfectly valid saved list before it's had a chance to
+  // resolve (compareProducts' own `.filter(Boolean)` already hides ids for not-yet-loaded
+  // or genuinely deleted products without touching what's persisted).
+  useEffect(() => {
+    setCompare((prev) => {
+      const arr = Array.isArray(prev) ? prev : [];
+      const clean = [...new Set(arr.filter((id) => typeof id === 'string' && id))].slice(0, 3);
+      return clean;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const loadTimer = useRef(null);
 
@@ -175,7 +203,8 @@ export default function MarketplaceSection() {
   );
 
   const toggleCompare = (id) => {
-    setCompare((prev) => {
+    setCompare((prevRaw) => {
+      const prev = Array.isArray(prevRaw) ? prevRaw : [];
       const has = prev.indexOf(id) >= 0;
       if (!has && prev.length >= 3) {
         showToast('Compare up to three products');
