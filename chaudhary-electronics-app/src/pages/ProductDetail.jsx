@@ -1,5 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import {
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Heart,
+  Lock,
+  MessageCircle,
+  ShieldCheck,
+  ShoppingCart,
+  Truck,
+  ZoomIn,
+} from 'lucide-react';
 import Bi from '../components/ui/Bi';
 import Breadcrumbs from '../components/ui/Breadcrumbs';
 import Lightbox from '../components/ui/Lightbox';
@@ -53,10 +65,10 @@ function RelatedCard({ p, onOpen, onAddToCart }) {
           type="button"
           onClick={onAddToCart}
           disabled={outOfStock}
-          className="mt-auto grid h-[36px] w-[36px] flex-shrink-0 cursor-pointer place-items-center self-end rounded-full border border-line bg-transparent text-[14px] text-ink transition-colors hover:bg-black/5 disabled:pointer-events-none disabled:opacity-30"
+          className="mt-auto grid h-[36px] w-[36px] flex-shrink-0 cursor-pointer place-items-center self-end rounded-full border border-line bg-transparent text-ink transition-colors hover:bg-black/5 disabled:pointer-events-none disabled:opacity-30"
           aria-label={`Add ${p.name} to cart`}
         >
-          🛒
+          <ShoppingCart className="h-4 w-4" />
         </button>
       </div>
     </div>
@@ -72,7 +84,7 @@ const TABS = [
   { key: 'seller', label: 'Seller Info' },
 ];
 
-/** /product/:id — premium buy-box product page: a ~40/60 zoomable-gallery / merged buy-box
+/** /product/:id — premium buy-box product page: a ~45/55 zoomable-gallery / merged buy-box
  * split, a tabbed info panel (Description/Specifications/Reviews/Shipping/Warranty/Seller —
  * matching a familiar Amazon/Shopify PDP structure), a trust-badge row, and a related-products
  * carousel. Every claim on the page is backed by real data: shipping fee/threshold and support
@@ -190,8 +202,20 @@ export default function ProductDetail() {
   const lowStock = !outOfStock && d.stock <= 12;
   const isWished = wishlist.includes(d.id);
   const allSpecs = Object.keys(d.specs || {}).map((k) => ({ k, v: d.specs[k] }));
-  const highlightSpecs = allSpecs.slice(0, 3);
+  const highlightSpecs = allSpecs.slice(0, 4);
   const total = d.price * qty;
+
+  // "At a glance" facts for the buy box — always includes Brand/Warranty/MOQ/Stock (real
+  // fields on every product), plus whichever of the product's own specs (Wattage, Voltage,
+  // Panel Type, Dimensions, etc.) are actually present. Nothing here is invented: a field
+  // simply doesn't appear if the product data doesn't have it.
+  const keyDetails = [
+    { label: 'Brand', value: d.seller },
+    ...highlightSpecs.map((sp) => ({ label: sp.k, value: sp.v })),
+    { label: 'Warranty', value: d.warranty || 'Ask seller' },
+    { label: 'Min. order', value: `${moq} ${moq === 1 ? 'unit' : 'units'}` },
+    { label: 'Availability', value: outOfStock ? 'Out of stock' : `${d.stock} in stock` },
+  ];
 
   const shippingFee = settings?.shipping?.flatRate || 0;
   const freeShippingThreshold = settings?.shipping?.freeShippingThreshold || 0;
@@ -244,8 +268,8 @@ export default function ProductDetail() {
           ]}
         />
 
-        {/* Gallery (~40%) + merged buy box (~60%) */}
-        <div className="grid grid-cols-1 gap-7 lg:grid-cols-[2fr_3fr] lg:items-start lg:gap-9">
+        {/* Gallery (~45%) + merged buy box (~55%) */}
+        <div className="grid grid-cols-1 gap-7 lg:grid-cols-[5fr_6fr] lg:items-start lg:gap-9">
           <div className="flex flex-col gap-3 lg:sticky lg:top-[104px]">
             <div className="relative">
               <button
@@ -254,16 +278,19 @@ export default function ProductDetail() {
                 aria-label={`Enlarge image of ${d.name}`}
                 className="group relative block aspect-square w-full cursor-zoom-in overflow-hidden rounded-[22px] border border-line bg-[#EAE5DB] p-0"
               >
+                {/* object-contain (not cover) + padding — the whole product always stays inside
+                    the frame, centered, at its real aspect ratio; nothing gets cropped off the
+                    edges the way a cover-fit would with a non-square source photo. */}
                 <img
                   loading="lazy"
                   decoding="async"
                   src={imgUrl(activeImg, 900)}
                   alt={d.name}
                   onError={imgFallback('product', 1)}
-                  className="h-full w-full object-cover transition-transform duration-500 ease-[cubic-bezier(0.2,0.7,0.2,1)] group-hover:scale-[1.06]"
+                  className="h-full w-full object-contain p-6 transition-transform duration-500 ease-[cubic-bezier(0.2,0.7,0.2,1)] group-hover:scale-[1.06] sm:p-9"
                 />
                 <span className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-center gap-1.5 bg-gradient-to-t from-[rgba(15,14,11,0.55)] to-transparent py-3 text-[11.5px] font-semibold text-paper opacity-0 transition-opacity group-hover:opacity-100">
-                  <span aria-hidden="true">🔍</span> Hover to zoom
+                  <ZoomIn className="h-3.5 w-3.5" aria-hidden="true" /> Hover to zoom
                 </span>
               </button>
               <button
@@ -272,9 +299,9 @@ export default function ProductDetail() {
                 aria-pressed={isWished}
                 aria-label={isWished ? `Remove ${d.name} from saved` : `Save ${d.name}`}
                 style={{ color: isWished ? 'var(--color-acc)' : 'var(--color-mut)' }}
-                className="absolute top-3 right-3 grid h-10 w-10 place-items-center rounded-full border border-line bg-paper/90 text-[16px] backdrop-blur-sm transition-colors hover:bg-paper"
+                className="absolute top-3 right-3 grid h-10 w-10 place-items-center rounded-full border border-line bg-paper/90 backdrop-blur-sm transition-colors hover:bg-paper"
               >
-                ♥
+                <Heart className="h-[18px] w-[18px]" fill={isWished ? 'currentColor' : 'none'} />
               </button>
               {hasMultipleImages && (
                 <>
@@ -282,17 +309,17 @@ export default function ProductDetail() {
                     type="button"
                     onClick={goPrevImg}
                     aria-label="Previous image"
-                    className="absolute top-1/2 left-3 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full border border-line bg-paper/90 text-[15px] backdrop-blur-sm transition-colors hover:bg-paper"
+                    className="absolute top-1/2 left-3 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full border border-line bg-paper/90 backdrop-blur-sm transition-colors hover:bg-paper"
                   >
-                    ←
+                    <ChevronLeft className="h-[18px] w-[18px]" />
                   </button>
                   <button
                     type="button"
                     onClick={goNextImg}
                     aria-label="Next image"
-                    className="absolute top-1/2 right-3 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full border border-line bg-paper/90 text-[15px] backdrop-blur-sm transition-colors hover:bg-paper"
+                    className="absolute top-1/2 right-3 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full border border-line bg-paper/90 backdrop-blur-sm transition-colors hover:bg-paper"
                   >
-                    →
+                    <ChevronRight className="h-[18px] w-[18px]" />
                   </button>
                 </>
               )}
@@ -308,9 +335,9 @@ export default function ProductDetail() {
                     aria-label={`View image ${i + 1} of ${d.name}`}
                     aria-current={activeImg === g}
                     style={{ borderColor: activeImg === g ? 'var(--color-acc)' : 'transparent' }}
-                    className="h-[54px] w-[54px] flex-shrink-0 cursor-pointer overflow-hidden rounded-lg border-2 bg-[#EAE5DB] p-0 transition-opacity hover:opacity-90"
+                    className="h-[54px] w-[54px] flex-shrink-0 cursor-pointer overflow-hidden rounded-lg border-2 bg-[#EAE5DB] p-1 transition-opacity hover:opacity-90"
                   >
-                    <img loading="lazy" decoding="async" src={imgUrl(g, 160)} alt="" className="h-full w-full object-cover" />
+                    <img loading="lazy" decoding="async" src={imgUrl(g, 160)} alt="" className="h-full w-full object-contain" />
                   </button>
                 ))}
               </div>
@@ -346,21 +373,17 @@ export default function ProductDetail() {
 
             {d.note && <p className="text-[14.5px] leading-[1.55] text-mut">{d.note}</p>}
 
-            {highlightSpecs.length > 0 && (
-              <div className="grid grid-cols-1 gap-3 border-t border-line pt-4 sm:grid-cols-3">
-                {highlightSpecs.map((sp) => (
-                  <div key={sp.k} className="flex items-start gap-2">
-                    <span className="mt-0.5 grid h-6 w-6 flex-shrink-0 place-items-center rounded-full bg-acc-soft text-[12px] text-[#8A6416]" aria-hidden="true">
-                      ✓
-                    </span>
-                    <span className="flex flex-col">
-                      <span className="text-[12px] text-mut">{sp.k}</span>
-                      <span className="text-[13px] font-semibold text-ink">{sp.v}</span>
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
+            {/* Key details — Brand/Warranty/MOQ/Stock always shown, plus whichever real specs
+                (Wattage, Voltage, Panel Type, Dimensions, …) this product actually has. This is
+                what keeps the buy box from reading as empty once a product has real data. */}
+            <div className="grid grid-cols-2 gap-x-4 gap-y-3.5 border-t border-line pt-4 sm:grid-cols-3">
+              {keyDetails.map((kd) => (
+                <div key={kd.label} className="flex flex-col gap-0.5">
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-mut">{kd.label}</span>
+                  <span className="text-[13.5px] font-semibold text-ink">{kd.value}</span>
+                </div>
+              ))}
+            </div>
 
             <div className="flex flex-wrap items-baseline gap-1.5 border-t border-line pt-4">
               <span className="text-[30px] font-bold tracking-[-0.03em]" data-tnum>
@@ -380,7 +403,7 @@ export default function ProductDetail() {
 
             <div className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-[#FBFAF7] px-[15px] py-[13px]">
               <span className="flex flex-col gap-0.5">
-                <span className="text-[11px] font-semibold uppercase tracking-[0.07em] text-mut">Sold &amp; installed by</span>
+                <span className="text-[11px] font-semibold uppercase tracking-[0.07em] text-mut">Sold by</span>
                 <span className="text-[14.5px] font-[650]">{d.seller}</span>
               </span>
               <button
@@ -414,6 +437,9 @@ export default function ProductDetail() {
                         max={d.stock}
                         onInvalid={(msg) => msg && showToast(msg)}
                       />
+                      <span className="text-[11.5px] text-mut">
+                        Min {moq} · {d.stock} available
+                      </span>
                     </span>
                     <span className="flex flex-col items-end gap-1">
                       <span className="text-[11px] font-semibold uppercase tracking-[0.07em] text-mut">Total</span>
@@ -427,7 +453,7 @@ export default function ProductDetail() {
                     onClick={handleAddToCart}
                     className="flex w-full items-center justify-center gap-2 rounded-full border-none bg-ink px-5 py-4 text-[15px] font-[680] text-paper transition-transform hover:-translate-y-0.5"
                   >
-                    <span aria-hidden="true">🛒</span>
+                    <ShoppingCart className="h-[18px] w-[18px]" aria-hidden="true" />
                     <Bi en="Add to cart" ur="کارٹ میں ڈالیں" />
                   </button>
                 </>
@@ -439,15 +465,13 @@ export default function ProductDetail() {
                 claims this business doesn't actually offer). */}
             <div className="grid grid-cols-2 gap-3 border-t border-line pt-4 sm:grid-cols-4">
               {[
-                { icon: '🚚', label: shippingLine, sub: freeShippingThreshold > 0 ? `Free over ${fmtPKR(freeShippingThreshold)}` : 'Service areas' },
-                { icon: '🛡️', label: 'Warranty', sub: d.warranty || 'Ask seller' },
-                { icon: '🔒', label: 'Secure checkout', sub: 'Encrypted payment' },
-                { icon: '💬', label: 'Chat support', sub: businessHours || 'Message anytime' },
+                { Icon: Truck, label: shippingLine, sub: freeShippingThreshold > 0 ? `Free over ${fmtPKR(freeShippingThreshold)}` : 'Service areas' },
+                { Icon: ShieldCheck, label: 'Warranty', sub: d.warranty || 'Ask seller' },
+                { Icon: Lock, label: 'Secure checkout', sub: 'Encrypted payment' },
+                { Icon: MessageCircle, label: 'Chat support', sub: businessHours || 'Message anytime' },
               ].map((b) => (
-                <div key={b.label} className="flex flex-col items-start gap-1">
-                  <span className="text-[16px]" aria-hidden="true">
-                    {b.icon}
-                  </span>
+                <div key={b.label} className="flex flex-col items-start gap-1.5">
+                  <b.Icon className="h-[18px] w-[18px] text-acc" aria-hidden="true" />
                   <span className="text-[12px] font-semibold text-ink">{b.label}</span>
                   <span className="text-[11px] text-mut">{b.sub}</span>
                 </div>
@@ -496,9 +520,7 @@ export default function ProductDetail() {
                     <ul className="mt-1 flex flex-col gap-1.5">
                       {allSpecs.slice(0, 6).map((sp) => (
                         <li key={sp.k} className="flex items-start gap-2 text-[13.5px] text-mut">
-                          <span className="mt-[3px] text-acc" aria-hidden="true">
-                            ✓
-                          </span>
+                          <Check className="mt-[3px] h-3.5 w-3.5 flex-shrink-0 text-acc" aria-hidden="true" />
                           <span>
                             {sp.k}: <span className="font-semibold text-ink">{sp.v}</span>
                           </span>
@@ -598,7 +620,7 @@ export default function ProductDetail() {
                 <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line bg-[#FBFAF7] px-5 py-4">
                   <span className="flex flex-col gap-0.5">
                     <span className="text-[15px] font-[650]">{d.seller}</span>
-                    <span className="text-[13px] text-mut">Sells &amp; installs this product</span>
+                    <span className="text-[13px] text-mut">Sells this product</span>
                   </span>
                   <button
                     type="button"
@@ -623,17 +645,17 @@ export default function ProductDetail() {
                   type="button"
                   onClick={() => scrollRelated(-1)}
                   aria-label="Scroll left"
-                  className="grid h-8 w-8 place-items-center rounded-full border border-line bg-transparent text-[13px] transition-colors hover:bg-black/5"
+                  className="grid h-8 w-8 place-items-center rounded-full border border-line bg-transparent transition-colors hover:bg-black/5"
                 >
-                  ←
+                  <ChevronLeft className="h-4 w-4" />
                 </button>
                 <button
                   type="button"
                   onClick={() => scrollRelated(1)}
                   aria-label="Scroll right"
-                  className="grid h-8 w-8 place-items-center rounded-full border border-line bg-transparent text-[13px] transition-colors hover:bg-black/5"
+                  className="grid h-8 w-8 place-items-center rounded-full border border-line bg-transparent transition-colors hover:bg-black/5"
                 >
-                  →
+                  <ChevronRight className="h-4 w-4" />
                 </button>
               </div>
             </div>
