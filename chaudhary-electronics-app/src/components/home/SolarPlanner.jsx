@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useLang } from '../../i18n/LangContext';
 import Bi from '../ui/Bi';
 import Stepper from '../ui/Stepper';
-import { imgFallback } from '../../lib/format';
+import { imgFallback, waLink } from '../../lib/format';
 import {
   calcPlannerResult,
   formatPlannerPKR,
@@ -10,6 +10,9 @@ import {
   PLANNER_PRESET,
   PLANNER_LIMITS,
 } from '../../lib/plannerCalc';
+
+// Same business number QuoteForm.jsx / CartContext.jsx already use for their WhatsApp flows.
+const WHATSAPP_NUMBER = '920000000000';
 
 /** 68x40 pill switch, matches the source's inline-styled water pump / backup toggles. */
 function ToggleSwitch({ checked, onChange, ariaLabel }) {
@@ -29,13 +32,13 @@ function ToggleSwitch({ checked, onChange, ariaLabel }) {
   );
 }
 
-function CounterRow({ labelEn, labelUr, value, onChange, min, max }) {
+function CounterRow({ labelEn, labelUr, value, onChange, min }) {
   return (
     <div className="flex items-center justify-between gap-3.5 border-b border-line py-4">
       <span className="text-[15.5px] font-semibold">
         <Bi en={labelEn} ur={labelUr} />
       </span>
-      <Stepper value={value} onChange={onChange} min={min} max={max} />
+      <Stepper value={value} onChange={onChange} min={min} />
     </div>
   );
 }
@@ -184,6 +187,33 @@ export default function SolarPlanner({ onCarryToQuote }) {
     onCarryToQuote(summary);
   };
 
+  // Built fresh from the live `result`/inputs on every click (not memoized/cached), so
+  // whatever was last typed is always what ends up in the message — no separate checkout
+  // page, no stale snapshot. English throughout, matching QuoteForm.jsx/CartContext.jsx's
+  // own WhatsApp messages, which stay English regardless of the site's language toggle.
+  function buildBuyNowMessage() {
+    const batteryLine = result.batteryKwh ? `${result.batteryKwh} kWh` : 'None';
+    const backupLine = backup ? `${hours} hours` : 'Not selected';
+    return (
+      'Hello, I want to purchase this solar system.\n\n' +
+      `Recommended System: ${packageName}\n` +
+      `Solar Panels: ${result.panels}\n` +
+      `Battery: ${batteryLine}\n` +
+      `ACs: ${acs}\n` +
+      `Fans: ${fans}\n` +
+      `Lights: ${lights}\n` +
+      `Refrigerators: ${fridges}\n` +
+      `Backup Hours: ${backupLine}\n` +
+      `Estimated Investment: ${priceLowLabel} – ${priceHighLabel}\n\n` +
+      'Please guide me about the purchase and installation.'
+    );
+  }
+
+  const handleBuyNow = () => {
+    if (result.isEmpty) return;
+    window.open(waLink(WHATSAPP_NUMBER, buildBuyNowMessage()), '_blank');
+  };
+
   return (
     <section
       id="planner"
@@ -240,7 +270,6 @@ export default function SolarPlanner({ onCarryToQuote }) {
               value={acs}
               onChange={setAcs}
               min={PLANNER_LIMITS.acs.min}
-              max={PLANNER_LIMITS.acs.max}
             />
             <CounterRow
               labelEn="Fans"
@@ -248,7 +277,6 @@ export default function SolarPlanner({ onCarryToQuote }) {
               value={fans}
               onChange={setFans}
               min={PLANNER_LIMITS.fans.min}
-              max={PLANNER_LIMITS.fans.max}
             />
             <CounterRow
               labelEn="Lights"
@@ -256,7 +284,6 @@ export default function SolarPlanner({ onCarryToQuote }) {
               value={lights}
               onChange={setLights}
               min={PLANNER_LIMITS.lights.min}
-              max={PLANNER_LIMITS.lights.max}
             />
             <CounterRow
               labelEn="Refrigerators"
@@ -264,7 +291,6 @@ export default function SolarPlanner({ onCarryToQuote }) {
               value={fridges}
               onChange={setFridges}
               min={PLANNER_LIMITS.fridges.min}
-              max={PLANNER_LIMITS.fridges.max}
             />
 
             <div className="flex items-center justify-between gap-3.5 border-b border-line py-4">
@@ -393,15 +419,26 @@ export default function SolarPlanner({ onCarryToQuote }) {
                 <Bi en={advice.en} ur={advice.ur} />
               </div>
 
-              <a
-                href="#quote"
-                onClick={handleCarryToQuote}
-                style={{ opacity: result.isEmpty ? 0.45 : 1 }}
-                className="flex items-center justify-center gap-2.5 rounded-full bg-acc px-[22px] py-[17px] text-[15.5px] font-bold text-[#17150F] shadow-[0_16px_40px_-16px_rgba(226,163,71,0.8)] transition-transform duration-300 hover:-translate-y-[3px]"
-              >
-                <Bi en="Get this quoted — free" ur="مفت کوٹیشن لیں" />
-                <span className="text-[17px]">→</span>
-              </a>
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <a
+                  href="#quote"
+                  onClick={handleCarryToQuote}
+                  style={{ opacity: result.isEmpty ? 0.45 : 1 }}
+                  className="flex flex-1 items-center justify-center gap-2.5 rounded-full bg-acc px-[22px] py-[17px] text-[15.5px] font-bold text-[#17150F] shadow-[0_16px_40px_-16px_rgba(226,163,71,0.8)] transition-transform duration-300 hover:-translate-y-[3px]"
+                >
+                  <Bi en="Get this quoted — free" ur="مفت کوٹیشن لیں" />
+                  <span className="text-[17px]">→</span>
+                </a>
+                <button
+                  type="button"
+                  onClick={handleBuyNow}
+                  disabled={result.isEmpty}
+                  style={{ opacity: result.isEmpty ? 0.45 : 1 }}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-full border border-[rgba(245,242,236,0.26)] bg-[rgba(245,242,236,0.1)] px-[22px] py-[17px] text-[15.5px] font-semibold whitespace-nowrap text-[#F5F2EC] backdrop-blur-[12px] transition-[background,transform] duration-300 hover:-translate-y-[3px] hover:bg-[rgba(245,242,236,0.2)] disabled:pointer-events-none"
+                >
+                  <Bi en="Buy Now" ur="ابھی خریدیں" />
+                </button>
+              </div>
             </div>
           </div>
         </div>

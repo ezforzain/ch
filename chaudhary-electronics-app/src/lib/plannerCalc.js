@@ -56,16 +56,19 @@ export const PLANNER_PRESET = {
   hours: 6,
 };
 
+// Only `hours` keeps a max — it drives a physical slider (backup bank sizing), not a typed
+// appliance count. Appliance counts are intentionally unbounded above; the "ceiling" a large
+// count hits is the real system-size ladder below (SYSTEM_SIZE_LADDER_KW), not a UI limit.
 export const PLANNER_LIMITS = {
-  acs: { min: 0, max: 12 },
-  fans: { min: 0, max: 40 },
-  lights: { min: 0, max: 80 },
-  fridges: { min: 0, max: 8 },
+  acs: { min: 0 },
+  fans: { min: 0 },
+  lights: { min: 0 },
+  fridges: { min: 0 },
   hours: { min: 2, max: 12 },
 };
 
-function clampCount(v, max) {
-  return Math.max(0, Math.min(max, Math.floor(Number(v) || 0)));
+function clampCount(v) {
+  return Math.max(0, Math.floor(Number(v) || 0));
 }
 
 /**
@@ -95,10 +98,10 @@ export function calcPlannerResult({
   pricePerKw = DEFAULT_PRICE_PER_KW,
 } = {}) {
   const W = APPLIANCE_WATTS;
-  const acsN = clampCount(acs, PLANNER_LIMITS.acs.max);
-  const fansN = clampCount(fans, PLANNER_LIMITS.fans.max);
-  const lightsN = clampCount(lights, PLANNER_LIMITS.lights.max);
-  const fridgesN = clampCount(fridges, PLANNER_LIMITS.fridges.max);
+  const acsN = clampCount(acs);
+  const fansN = clampCount(fans);
+  const lightsN = clampCount(lights);
+  const fridgesN = clampCount(fridges);
 
   // daily kWh use — source: const daily = ...
   const daily =
