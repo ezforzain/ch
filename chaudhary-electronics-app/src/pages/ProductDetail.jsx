@@ -108,6 +108,7 @@ export default function ProductDetail() {
   const [settings, setSettings] = useState(null);
   const [showStickyBar, setShowStickyBar] = useState(false);
   const [tab, setTab] = useState('description');
+  const [relatedScroll, setRelatedScroll] = useState({ canLeft: false, canRight: false });
   const addToCartRef = useRef(null);
   const relatedScrollRef = useRef(null);
 
@@ -163,6 +164,30 @@ export default function ProductDetail() {
     const pool = sameCategory.length > 0 ? sameCategory : products.filter((p) => p.id !== d.id);
     return pool.slice(0, RELATED_LIMIT);
   }, [products, d]);
+
+  // Whether the related-products row actually overflows its container — with only a couple of
+  // items (a small catalogue) it often doesn't, and a scroll button that can't scroll anything
+  // just looks broken when clicked. Re-checked on resize and whenever the row's own content
+  // changes width (ResizeObserver), not just on mount, since the same page can go from
+  // scrollable to not (or back) as the viewport or the product list changes.
+  useEffect(() => {
+    const el = relatedScrollRef.current;
+    if (!el) return undefined;
+    function updateScrollState() {
+      setRelatedScroll({
+        canLeft: el.scrollLeft > 4,
+        canRight: el.scrollLeft + el.clientWidth < el.scrollWidth - 4,
+      });
+    }
+    updateScrollState();
+    el.addEventListener('scroll', updateScrollState, { passive: true });
+    const observer = new ResizeObserver(updateScrollState);
+    observer.observe(el);
+    return () => {
+      el.removeEventListener('scroll', updateScrollState);
+      observer.disconnect();
+    };
+  }, [relatedProducts]);
 
   if (!d) {
     return (
@@ -640,24 +665,31 @@ export default function ProductDetail() {
           <section className="flex flex-col gap-3.5">
             <div className="flex items-center justify-between gap-3">
               <h2 className="text-[17px] font-[680] tracking-[-0.02em]">You may also like</h2>
-              <div className="hidden items-center gap-2 sm:flex">
-                <button
-                  type="button"
-                  onClick={() => scrollRelated(-1)}
-                  aria-label="Scroll left"
-                  className="grid h-8 w-8 place-items-center rounded-full border border-line bg-transparent transition-colors hover:bg-black/5"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => scrollRelated(1)}
-                  aria-label="Scroll right"
-                  className="grid h-8 w-8 place-items-center rounded-full border border-line bg-transparent transition-colors hover:bg-black/5"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </button>
-              </div>
+              {/* Only shown once the row actually has something to scroll to — a couple of
+                  products rarely overflow the container, and a control that visibly does
+                  nothing when clicked reads as broken rather than just inert. */}
+              {(relatedScroll.canLeft || relatedScroll.canRight) && (
+                <div className="hidden items-center gap-2 sm:flex">
+                  <button
+                    type="button"
+                    onClick={() => scrollRelated(-1)}
+                    disabled={!relatedScroll.canLeft}
+                    aria-label="Scroll left"
+                    className="grid h-8 w-8 place-items-center rounded-full border border-line bg-transparent transition-colors hover:bg-black/5 disabled:pointer-events-none disabled:opacity-30"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => scrollRelated(1)}
+                    disabled={!relatedScroll.canRight}
+                    aria-label="Scroll right"
+                    className="grid h-8 w-8 place-items-center rounded-full border border-line bg-transparent transition-colors hover:bg-black/5 disabled:pointer-events-none disabled:opacity-30"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
             </div>
             <div ref={relatedScrollRef} className="flex snap-x gap-3.5 overflow-x-auto scroll-smooth pb-2">
               {relatedProducts.map((p) => (
