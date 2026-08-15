@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { resolveImageUrl, ApiRequestError } from '../../lib/api';
+import { validateAvatarFile, AVATAR_ACCEPT } from '../../lib/avatarValidation';
 import { cardClass, inputClass, primaryBtnClass } from '../../components/admin/adminStyles';
 
 const STATUS_LABELS = { pending: 'Pending review', approved: 'Approved', rejected: 'Rejected', suspended: 'Suspended' };
@@ -34,7 +35,15 @@ export default function SellerSettings() {
 
   function onAvatarChange(e) {
     const file = e.target.files[0];
+    e.target.value = ''; // let the same file be re-picked after a rejection
     if (!file) return;
+
+    const error = validateAvatarFile(file);
+    if (error) {
+      showToast(error);
+      return;
+    }
+
     if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
     const localUrl = URL.createObjectURL(file);
     objectUrlRef.current = localUrl;
@@ -99,7 +108,7 @@ export default function SellerSettings() {
             className={`grid h-10 w-fit cursor-pointer place-items-center rounded-[10px] border border-[var(--a-line)] bg-[var(--a-white)] px-4 text-[12.5px] font-semibold text-[var(--a-ink)] ${saving ? 'pointer-events-none opacity-60' : ''}`}
           >
             {saving ? 'Uploading…' : 'Change photo'}
-            <input type="file" accept="image/*" onChange={onAvatarChange} disabled={saving} className="hidden" />
+            <input type="file" accept={AVATAR_ACCEPT} onChange={onAvatarChange} disabled={saving} className="hidden" />
           </label>
         </div>
 

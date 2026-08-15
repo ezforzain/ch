@@ -193,6 +193,7 @@ export const schemas = {
     hideAdd: true,
     hideDuplicateArchive: true,
     columns: [
+      { key: 'avatar', label: 'Photo', type: 'avatar' },
       { key: 'name', label: 'Name' },
       { key: 'role', label: 'Role', type: 'status' },
       { key: 'email', label: 'Email' },

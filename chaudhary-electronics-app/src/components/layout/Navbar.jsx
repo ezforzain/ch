@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { LogOut, ShieldCheck } from 'lucide-react';
+import { LogOut, ShieldCheck, UserCircle } from 'lucide-react';
 import { useLang } from '../../i18n/LangContext';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
@@ -273,6 +273,14 @@ export default function Navbar() {
                       <div className="truncate text-[13.5px] font-bold text-ink">{user?.name || 'Account'}</div>
                       <div className="truncate text-[12px] text-mut capitalize">{user?.role}</div>
                     </div>
+                    <Link
+                      to="/profile"
+                      onClick={() => setAccountOpen(false)}
+                      className="mt-1 flex items-center gap-2 rounded-[10px] px-3 py-2.5 text-[13.5px] font-semibold text-ink transition-colors duration-200 hover:bg-[rgba(23,21,15,0.05)]"
+                    >
+                      <UserCircle className="h-4 w-4" />
+                      <Bi en="My Profile" ur="میری پروفائل" />
+                    </Link>
                     {isAdmin && (
                       <Link
                         to="/admin"
@@ -379,6 +387,15 @@ export default function Navbar() {
                 className="rounded-2xl px-4 py-[15px] text-[16px] font-semibold transition-colors duration-250 hover:bg-[rgba(23,21,15,0.05)] hover:text-ink"
               >
                 <Bi en="Marketplace" ur="مارکیٹ پلیس" />
+              </Link>
+              <Link
+                to="/profile"
+                tabIndex={menuOpen ? undefined : -1}
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center gap-2 rounded-2xl px-4 py-[15px] text-[16px] font-semibold transition-colors duration-250 hover:bg-[rgba(23,21,15,0.05)] hover:text-ink"
+              >
+                <UserCircle className="h-4 w-4" />
+                <Bi en="My Profile" ur="میری پروفائل" />
               </Link>
               {isAdmin && (
                 <Link

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { api } from '../../../lib/api';
+import { api, resolveImageUrl } from '../../../lib/api';
 import { useToast } from '../../../context/ToastContext';
 import ConfirmDialog from '../table/ConfirmDialog';
 import {
@@ -12,6 +12,22 @@ import {
 import { statusStyleFor } from '../../../data/admin/theme';
 
 const STATUS_LABEL = { pending: 'Pending', approved: 'Approved', rejected: 'Rejected', suspended: 'Suspended' };
+
+function Avatar({ user }) {
+  const url = resolveImageUrl(user.avatar?.url);
+  const initials = (user.name || '?')
+    .trim()
+    .split(/\s+/)
+    .map((w) => w.charAt(0))
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+  return (
+    <span className="grid h-9 w-9 flex-shrink-0 place-items-center overflow-hidden rounded-full bg-[var(--a-dark)] text-[11px] font-bold text-[#F5F2EC]">
+      {url ? <img src={url} alt="" loading="lazy" className="h-full w-full object-cover" /> : initials}
+    </span>
+  );
+}
 
 /**
  * /admin/sellers — Marketplace seller management: review pending sellers, approve/reject/
@@ -89,6 +105,7 @@ export default function Sellers() {
         <table className="w-full min-w-[680px] border-collapse text-[13.5px]">
           <thead>
             <tr className="bg-[var(--a-paper)] text-left text-[11.5px] text-[var(--a-mut)]">
+              <th className="w-[52px] p-3"></th>
               <th className="p-3">Business</th>
               <th className="p-3">Contact</th>
               <th className="p-3">Commission</th>
@@ -100,14 +117,14 @@ export default function Sellers() {
             {loading &&
               Array.from({ length: 4 }, (_, i) => (
                 <tr key={i} className="border-t border-[var(--a-line)]" aria-hidden="true">
-                  <td className="p-3" colSpan={5}>
+                  <td className="p-3" colSpan={6}>
                     <span className="block h-4 w-2/3 animate-pulse rounded-full bg-[var(--a-line)]" />
                   </td>
                 </tr>
               ))}
             {!loading && filtered.length === 0 && (
               <tr>
-                <td colSpan={5} className="p-10 text-center text-[var(--a-mut)]">
+                <td colSpan={6} className="p-10 text-center text-[var(--a-mut)]">
                   No sellers yet — accounts appear here once someone registers as a seller.
                 </td>
               </tr>
@@ -115,6 +132,9 @@ export default function Sellers() {
             {!loading &&
               filtered.map((s) => (
                 <tr key={s._id} className="border-t border-[var(--a-line)]">
+                  <td className="p-3">
+                    <Avatar user={s} />
+                  </td>
                   <td className="p-3">
                     <div className="font-semibold text-[var(--a-ink)]">{s.sellerProfile?.businessName || s.name}</div>
                     <div className="text-[12px] text-[var(--a-mut)]">{s.name}</div>

@@ -11,6 +11,7 @@ function mapFromApi(doc) {
   return {
     id: doc._id,
     name: doc.name,
+    avatar: doc.avatar,
     role: titleCase(doc.role),
     email: doc.email,
     status: doc.isActive ? 'Active' : 'Suspended',

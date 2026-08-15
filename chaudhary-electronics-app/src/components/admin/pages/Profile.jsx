@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { useToast } from '../../../context/ToastContext';
-import { resolveImageUrl, ApiRequestError } from '../../../lib/api';
+import { api, resolveImageUrl, ApiRequestError } from '../../../lib/api';
+import { validateAvatarFile, AVATAR_ACCEPT } from '../../../lib/avatarValidation';
 import { cardClass, primaryBtnClass } from '../adminStyles';
 
 /** /admin/profile — the admin's own account info + avatar, and a change-password form.
@@ -30,7 +31,15 @@ export default function Profile() {
 
   function onAvatarChange(e) {
     const file = e.target.files[0];
+    e.target.value = ''; // let the same file be re-picked after a rejection
     if (!file) return;
+
+    const error = validateAvatarFile(file);
+    if (error) {
+      showToast(error);
+      return;
+    }
+
     if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
     const localUrl = URL.createObjectURL(file);
     objectUrlRef.current = localUrl;
@@ -109,7 +118,7 @@ export default function Profile() {
             className={`cursor-pointer rounded-[10px] border border-[var(--a-line)] bg-[var(--a-paper)] px-3.5 py-2 text-[12.5px] font-semibold text-[var(--a-ink)] ${savingProfile ? 'pointer-events-none opacity-60' : ''}`}
           >
             {savingProfile ? 'Uploading…' : 'Change photo'}
-            <input type="file" accept="image/*" onChange={onAvatarChange} disabled={savingProfile} className="hidden" />
+            <input type="file" accept={AVATAR_ACCEPT} onChange={onAvatarChange} disabled={savingProfile} className="hidden" />
           </label>
         </div>
 

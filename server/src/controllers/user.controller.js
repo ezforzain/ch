@@ -66,7 +66,19 @@ export const updateMe = asyncHandler(async (req, res) => {
   const { name, phone } = req.body;
   const update = {};
   if (name !== undefined) update.name = name;
-  if (phone !== undefined) update.phone = phone;
+
+  if (phone !== undefined) {
+    const normalizedPhone = phone.trim();
+    // Only touch/validate phone when it actually differs from what's already on this
+    // account — the frontend resubmits the current phone on every save (e.g. avatar-only
+    // changes), so comparing against req.user.phone keeps that a no-op instead of running
+    // (and potentially failing) a uniqueness check against the user's own number.
+    if (normalizedPhone && normalizedPhone !== (req.user.phone || '')) {
+      const existing = await User.findOne({ phone: normalizedPhone, _id: { $ne: req.user._id } });
+      if (existing) throw ApiError.conflict('Mobile number is already taken by another account.');
+    }
+    if (normalizedPhone) update.phone = normalizedPhone;
+  }
 
   if (req.files?.avatar?.[0]) {
     if (req.user.avatar?.publicId) await deleteStoredImage(req.user.avatar);

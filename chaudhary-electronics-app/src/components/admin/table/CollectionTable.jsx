@@ -8,6 +8,7 @@ import { useToast } from '../../../context/ToastContext';
 import { schemas } from '../../../data/admin/schemas';
 import { PLACEHOLDER_IMG, statusStyleFor } from '../../../data/admin/theme';
 import { imgUrl } from '../../../data/catalogue';
+import { resolveImageUrl } from '../../../lib/api';
 import { exportCSV, exportExcel } from '../../../lib/adminExport';
 import {
   activeToggleBtnClass,
@@ -42,6 +43,28 @@ function Cell({ row, col }) {
     const raw = (Array.isArray(row.gallery) ? row.gallery[0] : null) || row[col.key];
     const url = raw ? imgUrl(raw, 100) : PLACEHOLDER_IMG;
     return <img src={url} alt="" loading="lazy" decoding="async" className="block h-10 w-10 rounded-lg object-cover" />;
+  }
+  if (col.type === 'avatar') {
+    // Server-uploaded avatar ({ url, publicId } — see server/src/models/User.js), resolved
+    // the same way every other avatar in the app is (Navbar, admin Header) so a locally-
+    // stored relative "/uploads/..." path and a Cloudinary absolute URL both render correctly.
+    const url = resolveImageUrl(row[col.key]?.url);
+    const initials = String(row.name ?? '?')
+      .trim()
+      .split(/\s+/)
+      .map((w) => w.charAt(0))
+      .join('')
+      .slice(0, 2)
+      .toUpperCase();
+    return (
+      <span className="grid h-10 w-10 flex-shrink-0 place-items-center overflow-hidden rounded-full bg-[var(--a-dark)] text-[12px] font-bold text-[#F5F2EC]">
+        {url ? (
+          <img src={url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
+        ) : (
+          initials
+        )}
+      </span>
+    );
   }
   return <>{String(row[col.key] ?? '')}</>;
 }
@@ -162,7 +185,7 @@ export default function CollectionTable({
 
   const emptyMessage = allRows.length === 0 ? 'No records yet. Click "Add" to create one.' : 'No records match your filters.';
 
-  const viewSchemaColumns = viewRow ? schema.columns.filter((c) => c.type !== 'image') : [];
+  const viewSchemaColumns = viewRow ? schema.columns.filter((c) => c.type !== 'image' && c.type !== 'avatar') : [];
   const viewImageRaw = viewRow ? (Array.isArray(viewRow.gallery) ? viewRow.gallery[0] : null) || viewRow.image : null;
   const viewImage = viewRow ? (viewImageRaw ? imgUrl(viewImageRaw, 400) : PLACEHOLDER_IMG) : null;
 
@@ -304,7 +327,7 @@ export default function CollectionTable({
                         <td key={col.key} className="p-3">
                           <span
                             className="block h-4 animate-pulse rounded-full bg-[var(--a-line)]"
-                            style={{ width: col.type === 'image' ? 40 : `${60 + ((i * 13) % 40)}%` }}
+                            style={{ width: col.type === 'image' || col.type === 'avatar' ? 40 : `${60 + ((i * 13) % 40)}%` }}
                           />
                         </td>
                       ))}

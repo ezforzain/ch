@@ -1,10 +1,26 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { api } from '../../../lib/api';
+import { api, resolveImageUrl } from '../../../lib/api';
 import { useToast } from '../../../context/ToastContext';
 import Modal from '../../ui/Modal';
 import ConfirmDialog from '../table/ConfirmDialog';
 import { cardClass, dangerBtnSmallClass, ghostBtnClass, ghostBtnSmallClass, inputClass } from '../adminStyles';
 import { statusStyleFor } from '../../../data/admin/theme';
+
+function Avatar({ user }) {
+  const url = resolveImageUrl(user.avatar?.url);
+  const initials = (user.name || '?')
+    .trim()
+    .split(/\s+/)
+    .map((w) => w.charAt(0))
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+  return (
+    <span className="grid h-9 w-9 flex-shrink-0 place-items-center overflow-hidden rounded-full bg-[var(--a-dark)] text-[11px] font-bold text-[#F5F2EC]">
+      {url ? <img src={url} alt="" loading="lazy" className="h-full w-full object-cover" /> : initials}
+    </span>
+  );
+}
 
 /**
  * /admin/customers — real buyer accounts (server's User model, role: 'customer'). Bespoke
@@ -81,6 +97,7 @@ export default function Customers() {
         <table className="w-full min-w-[640px] border-collapse text-[13.5px]">
           <thead>
             <tr className="bg-[var(--a-paper)] text-left text-[11.5px] text-[var(--a-mut)]">
+              <th className="w-[52px] p-3"></th>
               <th className="p-3">Name</th>
               <th className="p-3">Contact</th>
               <th className="p-3">City</th>
@@ -92,14 +109,14 @@ export default function Customers() {
             {loading &&
               Array.from({ length: 4 }, (_, i) => (
                 <tr key={i} className="border-t border-[var(--a-line)]" aria-hidden="true">
-                  <td className="p-3" colSpan={5}>
+                  <td className="p-3" colSpan={6}>
                     <span className="block h-4 w-2/3 animate-pulse rounded-full bg-[var(--a-line)]" />
                   </td>
                 </tr>
               ))}
             {!loading && filtered.length === 0 && (
               <tr>
-                <td colSpan={5} className="p-10 text-center text-[var(--a-mut)]">
+                <td colSpan={6} className="p-10 text-center text-[var(--a-mut)]">
                   No buyers yet — accounts appear here once someone registers.
                 </td>
               </tr>
@@ -107,6 +124,9 @@ export default function Customers() {
             {!loading &&
               filtered.map((c) => (
                 <tr key={c._id} className="border-t border-[var(--a-line)]" style={{ opacity: c.isActive === false ? 0.5 : 1 }}>
+                  <td className="p-3">
+                    <Avatar user={c} />
+                  </td>
                   <td className="p-3 font-semibold text-[var(--a-ink)]">{c.name}</td>
                   <td className="p-3">
                     <div>{c.email}</div>
