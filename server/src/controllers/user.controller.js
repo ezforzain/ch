@@ -81,11 +81,18 @@ export const updateMe = asyncHandler(async (req, res) => {
   }
 
   if (req.files?.avatar?.[0]) {
-    if (req.user.avatar?.publicId) await deleteStoredImage(req.user.avatar);
+    // Store the NEW image first, delete the old one only after that succeeds — replacing an
+    // existing avatar previously deleted the old file before uploading the new one, so a
+    // failed/slow upload (network hiccup, Cloudinary error) could leave the account with no
+    // avatar at all. deleteStoredImage() is best-effort and never throws (see storeImage.js),
+    // so it can't fail this request even if cleanup of the old file doesn't succeed.
+    const oldAvatar = req.user.avatar?.publicId ? req.user.avatar : null;
     update.avatar = await storeImage(req.files.avatar[0], 'avatars');
+    if (oldAvatar) await deleteStoredImage(oldAvatar);
   }
 
   const user = await User.findByIdAndUpdate(req.user._id, update, { new: true, runValidators: true });
+  if (!user) throw ApiError.notFound('Your account could not be found.');
   // Same { user } envelope as /auth/me, /auth/login, etc. — callers (AuthContext.updateProfile)
   // apply this response straight to auth state without a second round trip to /auth/me.
   sendResponse(res, 200, 'Profile updated.', { user: user.toSafeJSON() });

@@ -86,6 +86,11 @@ export function AuthProvider({ children }) {
   // stuck showing the old photo until the next full refresh/login if it ever hiccuped.
   const updateProfile = useCallback(async (formData) => {
     const res = await api.patch('/users/me', formData, { isForm: true });
+    // A 2xx response is expected to always carry data.user (see updateMe) — guard against a
+    // malformed envelope explicitly instead of letting `res.data.user` throw a raw TypeError,
+    // which callers can't distinguish from "no error at all" and would surface as an
+    // unhelpful generic message instead of something diagnosable.
+    if (!res?.data?.user) throw new ApiRequestError('Profile update returned an unexpected response.', 0, []);
     setUser(res.data.user);
     return res.data.user;
   }, []);

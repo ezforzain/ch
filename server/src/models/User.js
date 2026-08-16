@@ -53,6 +53,10 @@ const userSchema = new mongoose.Schema(
     avatar: {
       url: { type: String, default: '' },
       publicId: { type: String, default: '' },
+      // Which storage backend publicId belongs to (cloudinary vs local disk) — without this,
+      // deleteStoredImage() has no way to know how to delete an EXISTING avatar on replace,
+      // since this field wasn't in the schema before and was silently stripped on every save.
+      provider: { type: String, default: '' },
     },
     role: {
       type: String,

@@ -42,12 +42,20 @@ export async function storeImages(files, folder = 'misc') {
   return Promise.all(files.map((file) => storeImage(file, folder)));
 }
 
-export async function deleteStoredImage({ publicId, provider }) {
+/** Best-effort cleanup of a replaced/removed image — deliberately swallows every failure
+ * (wrong provider inferred from data saved before `avatar.provider` existed, file already
+ * gone, permissions, a transient Cloudinary error) because deleting the OLD file is
+ * housekeeping, not the reason the caller's request exists. It must never be able to fail
+ * the request that's replacing it with a new one. */
+export async function deleteStoredImage({ publicId, provider } = {}) {
   if (!publicId) return;
-  if (provider === 'cloudinary' && env.useCloudinary) {
-    await cloudinary.uploader.destroy(publicId).catch(() => {});
-    return;
+  try {
+    if (provider === 'cloudinary' && env.useCloudinary) {
+      await cloudinary.uploader.destroy(publicId);
+    } else {
+      await fs.promises.unlink(path.join(UPLOADS_DIR, publicId));
+    }
+  } catch {
+    // Ignored — see comment above.
   }
-  const filePath = path.join(UPLOADS_DIR, publicId);
-  fs.unlink(filePath, () => {});
 }
