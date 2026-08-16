@@ -46,26 +46,30 @@ export default function App() {
           <ProductsProvider>
             {/* Cart + wishlist, shared by the /marketplace grid and the /product/:id
                 page now that product detail is a real route instead of a modal
-                owned by the marketplace grid component. */}
-            <CartProvider>
-              <BrowserRouter>
+                owned by the marketplace grid component. Mounted inside <BrowserRouter> (not
+                outside it) because addToCart/checkout need useNavigate/useLocation to send an
+                unauthenticated visitor to /login without leaving the page they were on. */}
+            <BrowserRouter>
+              <CartProvider>
                 <ScrollToHash />
                 <AndroidBackButton />
                 <Routes>
-                  {/* The whole public site (Home, Marketplace, product pages, Privacy/Terms) requires
-                      being signed in — an unauthenticated visitor is bounced to /login before any of
-                      it renders, so Login is genuinely the first screen the site shows. */}
-                  <Route
-                    element={
-                      <ProtectedRoute>
-                        <PublicLayout />
-                      </ProtectedRoute>
-                    }
-                  >
+                  {/* Home, Marketplace, product pages, and Privacy/Terms are public — anyone can
+                      browse without signing in, same as any normal storefront. Only account-specific
+                      pages (Profile) or actions (add to cart, checkout — guarded inside CartContext)
+                      require auth, and those send the visitor back here to log in first. */}
+                  <Route element={<PublicLayout />}>
                     <Route path="/" element={<Home />} />
                     <Route path="/marketplace" element={<Marketplace />} />
                     <Route path="/product/:id" element={<ProductDetail />} />
-                    <Route path="/profile" element={<Profile />} />
+                    <Route
+                      path="/profile"
+                      element={
+                        <ProtectedRoute>
+                          <Profile />
+                        </ProtectedRoute>
+                      }
+                    />
                     <Route path="/privacy" element={<Privacy />} />
                     <Route path="/terms" element={<Terms />} />
                     <Route path="*" element={<NotFound />} />
@@ -104,8 +108,8 @@ export default function App() {
                     }
                   />
                 </Routes>
-              </BrowserRouter>
-            </CartProvider>
+              </CartProvider>
+            </BrowserRouter>
           </ProductsProvider>
         </AuthProvider>
       </ToastProvider>

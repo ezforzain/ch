@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { LogOut, ShieldCheck, UserCircle } from 'lucide-react';
+import { LogIn, LogOut, ShieldCheck, UserCircle } from 'lucide-react';
 import { useLang } from '../../i18n/LangContext';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
@@ -244,7 +244,17 @@ export default function Navbar() {
             </span>
           </button>
 
-          {!compact && (
+          {!compact && !user && (
+            <Link
+              to="/login"
+              className="flex h-12 flex-shrink-0 items-center gap-2 rounded-full border border-line bg-white/50 px-4 text-[13.5px] font-semibold whitespace-nowrap text-ink transition-[color,box-shadow] duration-250 hover:shadow-[0_6px_16px_-6px_rgba(23,21,15,0.25)]"
+            >
+              <LogIn className="h-4 w-4" />
+              <Bi en="Sign in" ur="سائن ان" />
+            </Link>
+          )}
+
+          {!compact && user && (
             <div className="relative">
               <button
                 type="button"
@@ -388,15 +398,17 @@ export default function Navbar() {
               >
                 <Bi en="Marketplace" ur="مارکیٹ پلیس" />
               </Link>
-              <Link
-                to="/profile"
-                tabIndex={menuOpen ? undefined : -1}
-                onClick={() => setMenuOpen(false)}
-                className="flex items-center gap-2 rounded-2xl px-4 py-[15px] text-[16px] font-semibold transition-colors duration-250 hover:bg-[rgba(23,21,15,0.05)] hover:text-ink"
-              >
-                <UserCircle className="h-4 w-4" />
-                <Bi en="My Profile" ur="میری پروفائل" />
-              </Link>
+              {user && (
+                <Link
+                  to="/profile"
+                  tabIndex={menuOpen ? undefined : -1}
+                  onClick={() => setMenuOpen(false)}
+                  className="flex items-center gap-2 rounded-2xl px-4 py-[15px] text-[16px] font-semibold transition-colors duration-250 hover:bg-[rgba(23,21,15,0.05)] hover:text-ink"
+                >
+                  <UserCircle className="h-4 w-4" />
+                  <Bi en="My Profile" ur="میری پروفائل" />
+                </Link>
+              )}
               {isAdmin && (
                 <Link
                   to="/admin"
@@ -416,15 +428,27 @@ export default function Navbar() {
               >
                 <Bi en="Get a quote" ur="کوٹیشن لیں" />
               </a>
-              <button
-                type="button"
-                tabIndex={menuOpen ? undefined : -1}
-                onClick={handleLogout}
-                className="flex items-center gap-2 rounded-2xl px-4 py-[15px] text-left text-[16px] font-semibold text-[#C0392B] transition-colors duration-250 hover:bg-[rgba(192,57,43,0.08)]"
-              >
-                <LogOut className="h-4 w-4" />
-                <Bi en="Log out" ur="لاگ آؤٹ" />
-              </button>
+              {user ? (
+                <button
+                  type="button"
+                  tabIndex={menuOpen ? undefined : -1}
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 rounded-2xl px-4 py-[15px] text-left text-[16px] font-semibold text-[#C0392B] transition-colors duration-250 hover:bg-[rgba(192,57,43,0.08)]"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <Bi en="Log out" ur="لاگ آؤٹ" />
+                </button>
+              ) : (
+                <Link
+                  to="/login"
+                  tabIndex={menuOpen ? undefined : -1}
+                  onClick={() => setMenuOpen(false)}
+                  className="flex items-center gap-2 rounded-2xl px-4 py-[15px] text-[16px] font-semibold transition-colors duration-250 hover:bg-[rgba(23,21,15,0.05)] hover:text-ink"
+                >
+                  <LogIn className="h-4 w-4" />
+                  <Bi en="Sign in" ur="سائن ان" />
+                </Link>
+              )}
             </div>
           </div>
         </div>

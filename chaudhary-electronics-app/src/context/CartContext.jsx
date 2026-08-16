@@ -1,6 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from './ToastContext';
 import { useProducts } from './ProductsContext';
+import { useAuth } from './AuthContext';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { fmtPKR, waLink } from '../lib/format';
 
@@ -15,6 +17,18 @@ const WHATSAPP_NUMBER = '920000000000';
 export function CartProvider({ children }) {
   const showToast = useToast();
   const { findById } = useProducts();
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Add to cart / checkout are account-specific actions on an otherwise-public storefront —
+  // send a guest to sign in (returning them to the page they were on) instead of silently
+  // acting on a cart that isn't tied to anyone.
+  const requireAuth = useCallback(() => {
+    if (isAuthenticated) return true;
+    navigate('/login', { state: { from: location } });
+    return false;
+  }, [isAuthenticated, navigate, location]);
 
   const onStorageError = useCallback(
     () => showToast('Your browser blocked local storage — cart/wishlist changes won\'t be saved after you leave.'),
@@ -33,6 +47,7 @@ export function CartProvider({ children }) {
 
   const addToCart = useCallback(
     (id, qty = 1) => {
+      if (!requireAuth()) return;
       const p = findById(id);
       if (!p) return;
       if (p.stock <= 0) {
@@ -49,7 +64,7 @@ export function CartProvider({ children }) {
       });
       showToast(`${p.name} added to cart`);
     },
-    [findById, setCart, showToast],
+    [requireAuth, findById, setCart, showToast],
   );
 
   const setLineQty = useCallback(
@@ -83,6 +98,7 @@ export function CartProvider({ children }) {
   const cartUnits = cartLines.reduce((n, l) => n + l.qty, 0);
 
   const checkout = useCallback(() => {
+    if (!requireAuth()) return;
     if (!cartLines.length) return;
 
     // Stock can move (e.g. an admin edit) between adding to cart and checkout — reclamp
@@ -116,7 +132,7 @@ export function CartProvider({ children }) {
       '\nPlease confirm availability and installation cost.';
     window.open(waLink(WHATSAPP_NUMBER, msg), '_blank');
     showToast('Order sent — we reply within a few hours');
-  }, [cartLines, setCart, showToast]);
+  }, [requireAuth, cartLines, setCart, showToast]);
 
   const value = useMemo(
     () => ({ cart, wishlist, cartLines, wishItems, cartUnits, addToCart, setLineQty, toggleWish, checkout }),

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { AlertCircle, Check, Eye, EyeOff, Loader2, Lock, Mail } from 'lucide-react';
 import { useLang } from '../i18n/LangContext';
 import { useToast } from '../context/ToastContext';
@@ -38,7 +38,15 @@ export default function Login() {
   const { lang } = useLang();
   const showToast = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, loading, login, loginWithGoogle } = useAuth();
+
+  // Set by ProtectedRoute when a guest was bounced here from a protected page/action (e.g.
+  // /profile, or "Add to cart") — send them back there instead of the default role landing
+  // page once they're signed in.
+  const from = location.state?.from;
+  const redirectTarget = (loggedInUser) =>
+    from ? `${from.pathname}${from.search || ''}` : redirectPathForRole(loggedInUser?.role);
 
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
@@ -56,7 +64,7 @@ export default function Login() {
   // Already signed in (e.g. a page refresh with a live session) — skip the form
   // entirely instead of asking someone to log in twice.
   if (!loading && user && !success) {
-    return <Navigate to={redirectPathForRole(user.role)} replace />;
+    return <Navigate to={redirectTarget(user)} replace />;
   }
 
   function fieldError(name, values) {
@@ -127,7 +135,7 @@ export default function Login() {
       showToast(lang === 'ur' ? 'خوش آمدید! سائن ان کامیاب رہا۔' : 'Welcome back — signed in successfully.');
       redirectTimer.current = setTimeout(() => {
         try {
-          navigate(redirectPathForRole(user?.role));
+          navigate(redirectTarget(user));
         } catch (navErr) {
           if (import.meta.env.DEV) console.error('[Login] redirect failed:', navErr);
         }
@@ -161,7 +169,7 @@ export default function Login() {
       showToast(lang === 'ur' ? 'خوش آمدید! سائن ان کامیاب رہا۔' : 'Welcome back — signed in successfully.');
       redirectTimer.current = setTimeout(() => {
         try {
-          navigate(redirectPathForRole(user?.role));
+          navigate(redirectTarget(user));
         } catch (navErr) {
           if (import.meta.env.DEV) console.error('[Login] redirect failed:', navErr);
         }
