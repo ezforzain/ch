@@ -143,7 +143,7 @@ export default function Navbar() {
 
   return (
     <nav
-      className="pointer-events-none fixed top-[14px] left-1/2 z-[900] flex w-[calc(100%-20px)] max-w-[1320px] flex-col items-center gap-[10px] transition-transform duration-300 ease-[cubic-bezier(0.2,0.7,0.2,1)]"
+      className="pointer-events-none fixed top-[10px] sm:top-[14px] left-1/2 z-[900] flex w-[calc(100%-16px)] sm:w-[calc(100%-20px)] max-w-[1320px] flex-col items-center gap-[10px] transition-transform duration-300 ease-[cubic-bezier(0.2,0.7,0.2,1)]"
       // Inline style (not a Tailwind class) because it must combine the constant horizontal
       // centering with a dynamic vertical hide/show offset in one `transform` — two separate
       // transform-producing declarations (class + style) would just have the second silently
@@ -151,18 +151,18 @@ export default function Navbar() {
       style={{ transform: `translate(-50%, ${headerHidden ? 'calc(-100% - 24px)' : '0'})` }}
     >
       <div
-        className="box-border flex h-[76px] w-full items-center justify-between gap-1 rounded-[22px] border border-[rgba(23,21,15,0.09)] px-9 [backdrop-filter:blur(16px)_saturate(1.5)] transition-[box-shadow,background] duration-500 ease-in-out pointer-events-auto"
+        className="box-border flex h-[62px] sm:h-[76px] w-full items-center justify-between gap-1 rounded-[18px] sm:rounded-[22px] border border-[rgba(23,21,15,0.09)] px-3 sm:px-6 lg:px-9 [backdrop-filter:blur(16px)_saturate(1.5)] transition-[box-shadow,background] duration-500 ease-in-out pointer-events-auto"
         style={{ background: pillBackground, boxShadow: pillBoxShadow }}
       >
-        <a href="/#top" className="flex flex-shrink-0 items-center gap-3">
-          <span className="grid h-[46px] w-[46px] place-items-center rounded-[13px] bg-ink text-[16.5px] font-semibold tracking-[-0.02em] text-paper">
+        <a href="/#top" className="flex flex-shrink-0 items-center gap-2 sm:gap-3">
+          <span className="grid h-9 w-9 sm:h-[46px] sm:w-[46px] flex-shrink-0 place-items-center rounded-[10px] sm:rounded-[13px] bg-ink text-[13.5px] sm:text-[16.5px] font-semibold tracking-[-0.02em] text-paper">
             CE
           </span>
           {showWordmark && (
-            <span className="whitespace-nowrap text-[17.5px] leading-[1.18] font-bold tracking-[-0.025em]">
+            <span className="whitespace-nowrap text-[15px] sm:text-[17.5px] leading-[1.18] font-bold tracking-[-0.025em]">
               Chaudhary
               <br />
-              <span className="text-[12px] font-normal tracking-[0.05em] text-mut uppercase">
+              <span className="text-[10.5px] sm:text-[12px] font-normal tracking-[0.05em] text-mut uppercase">
                 Electronics
               </span>
             </span>
@@ -209,13 +209,13 @@ export default function Navbar() {
           </div>
         )}
 
-        <div className="flex flex-shrink-0 items-center gap-[14px]">
+        <div className="flex flex-shrink-0 items-center gap-1.5 sm:gap-[14px]">
           <button
             type="button"
             onClick={() => setSearchOpen(true)}
             title="Search"
             aria-label="Search"
-            className="grid h-12 w-12 flex-shrink-0 place-items-center rounded-full border border-line bg-white/50 text-[16px] text-mut transition-[color,box-shadow] duration-250 hover:text-ink hover:shadow-[0_6px_16px_-6px_rgba(23,21,15,0.25)]"
+            className="grid h-10 w-10 sm:h-12 sm:w-12 flex-shrink-0 place-items-center rounded-full border border-line bg-white/50 text-[15px] sm:text-[16px] text-mut transition-[color,box-shadow] duration-250 hover:text-ink hover:shadow-[0_6px_16px_-6px_rgba(23,21,15,0.25)]"
           >
             <span aria-hidden="true">⌕</span>
           </button>
@@ -226,17 +226,17 @@ export default function Navbar() {
             title="English / اردو"
             aria-label="Switch language"
             aria-pressed={lang === 'ur'}
-            className="flex h-12 items-center gap-[3px] rounded-full border border-line bg-white/50 p-1 transition-shadow duration-250 hover:shadow-[0_6px_16px_-6px_rgba(23,21,15,0.25)]"
+            className="flex h-10 sm:h-12 items-center gap-[2px] sm:gap-[3px] rounded-full border border-line bg-white/50 p-1 transition-shadow duration-250 hover:shadow-[0_6px_16px_-6px_rgba(23,21,15,0.25)]"
           >
             <span
-              className={`flex h-10 items-center justify-center rounded-full px-[15px] text-[13.5px] leading-none font-bold ${
+              className={`flex h-8 sm:h-10 items-center justify-center rounded-full px-2.5 sm:px-[15px] text-[12px] sm:text-[13.5px] leading-none font-bold ${
                 lang === 'en' ? 'bg-ink text-paper' : 'bg-transparent text-mut'
               }`}
             >
               EN
             </span>
             <span
-              className={`flex h-10 items-center justify-center overflow-hidden rounded-full px-[15px] font-urdu text-[14.5px] leading-none ${
+              className={`flex h-8 sm:h-10 items-center justify-center overflow-hidden rounded-full px-2.5 sm:px-[15px] font-urdu text-[13px] sm:text-[14.5px] leading-none ${
                 lang === 'ur' ? 'bg-ink text-paper' : 'bg-transparent text-mut'
               }`}
             >
@@ -331,7 +331,7 @@ export default function Navbar() {
             <a
               href="/#quote"
               aria-label="Get a quote"
-              className="flex h-12 flex-shrink-0 items-center justify-center whitespace-nowrap rounded-full bg-ink px-4 text-[13.5px] font-bold text-paper transition-transform hover:-translate-y-px"
+              className="flex h-10 sm:h-12 flex-shrink-0 items-center justify-center whitespace-nowrap rounded-full bg-ink px-3 sm:px-4 text-[12.5px] sm:text-[13.5px] font-bold text-paper transition-transform hover:-translate-y-px"
             >
               <Bi en="Quote" ur="کوٹیشن" />
             </a>
@@ -344,7 +344,7 @@ export default function Navbar() {
               aria-label="Menu"
               aria-expanded={menuOpen}
               aria-controls="mobile-menu-panel"
-              className="flex h-12 w-12 flex-shrink-0 flex-col items-center justify-center gap-1 rounded-full border-none bg-ink"
+              className="flex h-10 w-10 sm:h-12 sm:w-12 flex-shrink-0 flex-col items-center justify-center gap-1 rounded-full border-none bg-ink"
             >
               <span
                 className="block h-[1.8px] w-4 rounded-[2px] bg-paper transition-transform duration-300"

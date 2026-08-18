@@ -8,10 +8,10 @@ function Stat({ target, suffix, unitEn, unitUr, labelEn, labelUr, size }) {
   const { lang } = useLang();
   const [ref, value] = useCountUp(target);
   return (
-    <div className="bg-[rgba(15,14,11,0.5)] px-6 py-[22px]">
+    <div className="bg-[rgba(15,14,11,0.5)] px-4 py-4 sm:px-6 sm:py-[22px]">
       <div
         className="flex items-baseline gap-[6px] font-sans font-[680] tracking-[-0.035em]"
-        style={{ fontSize: size }}
+        style={{ fontSize: `clamp(24px, 6vw, ${size})` }}
       >
         <span
           ref={ref}
@@ -58,7 +58,7 @@ export default function Hero() {
     <section
       id="top"
       aria-label="Introduction"
-      className="relative flex min-h-screen min-h-[100svh] flex-col justify-end overflow-hidden bg-dark px-5 pt-[130px] pb-[30px] text-paper"
+      className="relative flex min-h-screen min-h-[100svh] flex-col justify-end overflow-hidden bg-dark px-5 pt-[84px] sm:pt-[130px] pb-[22px] sm:pb-[30px] text-paper"
     >
       {/* Subtle drifting glow layer — sits behind the parallax photo/gradients, shows
           through mostly along the darker top/bottom edges via mix-blend-screen. */}
@@ -79,8 +79,8 @@ export default function Hero() {
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(15,14,11,0.74)_0%,rgba(15,14,11,0.22)_42%,rgba(15,14,11,0.93)_100%)]" />
       <div className="absolute inset-0 bg-[radial-gradient(60%_55%_at_30%_20%,rgba(226,163,71,0.16),transparent_70%)]" />
 
-      <div className="relative mx-auto flex w-full max-w-[1200px] flex-col gap-10">
-        <div className="flex max-w-[900px] flex-col gap-[26px]">
+      <div className="relative mx-auto flex w-full max-w-[1200px] flex-col gap-6 sm:gap-10">
+        <div className="flex max-w-[900px] flex-col gap-4 sm:gap-[26px]">
           <span className="inline-flex items-center gap-[9px] self-start rounded-full border border-[rgba(245,242,236,0.2)] bg-[rgba(245,242,236,0.1)] py-[9px] pr-4 pl-3 font-sans text-[12.5px] font-semibold tracking-[0.075em] uppercase backdrop-blur-[10px]">
             <span className="h-[7px] w-[7px] rounded-full bg-acc shadow-[0_0_12px_var(--color-acc)]" />
             Since 2009 · 4,200+ installations
@@ -103,7 +103,7 @@ export default function Hero() {
               </>
             }
             className={`m-0 font-sans font-bold tracking-[-0.04em] text-balance ${
-              lang === 'ur' ? 'text-[clamp(40px,7vw,92px)] leading-[1.08]' : 'text-[clamp(50px,7.6vw,104px)] leading-[0.95]'
+              lang === 'ur' ? 'text-[clamp(30px,10vw,92px)] leading-[1.12]' : 'text-[clamp(36px,11vw,104px)] leading-[1.02] sm:leading-[0.95]'
             }`}
           />
 
@@ -116,24 +116,24 @@ export default function Hero() {
             }`}
           />
 
-          <div className="mt-2 flex flex-wrap gap-[14px]">
+          <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-[14px]">
             <a
               href="#planner"
-              className="inline-flex items-center gap-[11px] rounded-full bg-acc px-8 py-5 text-[16.5px] font-bold text-ink shadow-[0_20px_48px_-16px_rgba(226,163,71,0.85)] transition-[transform,box-shadow] duration-[350ms] ease-[cubic-bezier(0.2,0.7,0.2,1)] hover:-translate-y-[3px] hover:shadow-[0_26px_56px_-16px_rgba(226,163,71,0.95)]"
+              className="inline-flex items-center justify-center gap-[11px] rounded-full bg-acc px-6 py-4 sm:px-8 sm:py-5 text-[15px] sm:text-[16.5px] font-bold text-ink shadow-[0_20px_48px_-16px_rgba(226,163,71,0.85)] transition-[transform,box-shadow] duration-[350ms] ease-[cubic-bezier(0.2,0.7,0.2,1)] hover:-translate-y-[3px] hover:shadow-[0_26px_56px_-16px_rgba(226,163,71,0.95)]"
             >
               <Bi en="Size my system in 30 seconds" ur="۳۰ سیکنڈ میں سسٹم چنیں" />
               <span className="text-[18px]">→</span>
             </a>
             <a
               href="#quote"
-              className="inline-flex items-center rounded-full border border-[rgba(245,242,236,0.26)] bg-[rgba(245,242,236,0.1)] px-8 py-5 text-[16.5px] font-semibold whitespace-nowrap text-paper backdrop-blur-[12px] transition-[background,transform] duration-300 hover:-translate-y-[3px] hover:bg-[rgba(245,242,236,0.2)]"
+              className="inline-flex items-center justify-center rounded-full border border-[rgba(245,242,236,0.26)] bg-[rgba(245,242,236,0.1)] px-6 py-4 sm:px-8 sm:py-5 text-[15px] sm:text-[16.5px] font-semibold whitespace-nowrap text-paper backdrop-blur-[12px] transition-[background,transform] duration-300 hover:-translate-y-[3px] hover:bg-[rgba(245,242,236,0.2)]"
             >
               <Bi en="Free site survey" ur="مفت سروے" />
             </a>
           </div>
         </div>
 
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-px overflow-hidden rounded-[22px] border border-[rgba(245,242,236,0.15)] bg-[rgba(245,242,236,0.15)] backdrop-blur-[14px]">
+        <div className="grid grid-cols-2 min-[480px]:grid-cols-4 gap-px overflow-hidden rounded-[22px] border border-[rgba(245,242,236,0.15)] bg-[rgba(245,242,236,0.15)] backdrop-blur-[14px]">
           <Stat target={16} suffix="" labelEn="Years" labelUr="سال کا تجربہ" size="32px" />
           <Stat target={4200} suffix="+" labelEn="Projects" labelUr="منصوبے" size="34px" />
           <Stat target={38} suffix="" unitEn="MW" unitUr="میگاواٹ" labelEn="Installed" labelUr="نصب شدہ" size="34px" />
@@ -142,7 +142,7 @@ export default function Hero() {
 
         <CertifiedBadge />
 
-        <div className="flex h-6 justify-center overflow-hidden">
+        <div className="hidden h-6 justify-center overflow-hidden min-[400px]:flex">
           <span className="w-px h-5 animate-ce-hint bg-[linear-gradient(180deg,transparent,var(--color-acc))]" />
         </div>
       </div>

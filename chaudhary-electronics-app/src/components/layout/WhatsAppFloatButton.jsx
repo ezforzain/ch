@@ -23,16 +23,18 @@ export default function WhatsAppFloatButton() {
 
   return (
     <div
-      className="fixed right-5 z-[870] flex flex-col items-end gap-3 transition-[bottom] duration-[550ms] ease-[cubic-bezier(0.2,0.7,0.2,1)] sm:right-6"
-      style={{ bottom: ctaBarVisible ? '92px' : '22px' }}
+      className="fixed right-4 z-[870] flex flex-col items-end gap-2.5 transition-[bottom] duration-[550ms] ease-[cubic-bezier(0.2,0.7,0.2,1)] sm:right-6 sm:gap-3"
+      style={{
+        bottom: `calc(env(safe-area-inset-bottom, 0px) + ${ctaBarVisible ? '86px' : '18px'})`,
+      }}
     >
       <a
         href={`tel:${PHONE_TEL}`}
         aria-label="Call now"
         title="Call now"
-        className="flex h-12 w-12 items-center justify-center rounded-full bg-ink text-paper shadow-[0_14px_36px_-12px_rgba(23,21,15,0.6)] transition-transform duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_-12px_rgba(23,21,15,0.7)]"
+        className="flex h-11 w-11 items-center justify-center rounded-full bg-ink text-paper shadow-[0_14px_36px_-12px_rgba(23,21,15,0.6)] transition-transform duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_-12px_rgba(23,21,15,0.7)] sm:h-12 sm:w-12"
       >
-        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
         </svg>
       </a>
@@ -43,7 +45,7 @@ export default function WhatsAppFloatButton() {
         rel="noopener noreferrer"
         aria-label="Chat on WhatsApp"
         title="Chat on WhatsApp"
-        className="flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-[0_18px_44px_-14px_rgba(37,211,102,0.8)] transition-transform duration-300 hover:-translate-y-1 hover:shadow-[0_22px_48px_-14px_rgba(37,211,102,0.9)]"
+        className="flex h-[52px] w-[52px] items-center justify-center rounded-full bg-[#25D366] text-white shadow-[0_18px_44px_-14px_rgba(37,211,102,0.8)] transition-transform duration-300 hover:-translate-y-1 hover:shadow-[0_22px_48px_-14px_rgba(37,211,102,0.9)] sm:h-14 sm:w-14"
       >
         <svg width="26" height="26" viewBox="0 0 32 32" fill="currentColor">
           <path d="M16.004 3C9.377 3 4 8.373 4 15c0 2.386.7 4.61 1.902 6.478L4 29l7.72-1.87A11.94 11.94 0 0 0 16.004 27C22.63 27 28 21.627 28 15S22.63 3 16.004 3zm0 21.818a9.77 9.77 0 0 1-4.982-1.364l-.357-.212-4.583 1.11 1.128-4.47-.234-.367A9.78 9.78 0 0 1 5.2 15c0-5.965 4.847-10.818 10.804-10.818S26.8 9.035 26.8 15 21.961 24.818 16.004 24.818z" />

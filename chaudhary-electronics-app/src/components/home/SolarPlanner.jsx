@@ -248,7 +248,7 @@ export default function SolarPlanner({ onCarryToQuote }) {
           </h2>
         </div>
 
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(330px,1fr))] items-start gap-4">
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(min(330px,100%),1fr))] items-start gap-4">
           {/* Inputs card */}
           <div className="rounded-[28px] border border-line bg-[#FBFAF7] p-[clamp(20px,2.6vw,30px)] shadow-[0_28px_66px_-40px_rgba(23,21,15,0.45)]">
             <div className="flex items-center justify-between gap-2.5 border-b border-line pb-3.5">

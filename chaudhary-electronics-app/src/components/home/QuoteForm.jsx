@@ -160,7 +160,7 @@ export default function QuoteForm({ plannerSummary }) {
             />
           </div>
 
-          <div className="flex flex-col gap-[14px] rounded-[20px] border border-[#E8E8E8] bg-white p-[22px_24px] shadow-[0_10px_40px_rgba(0,0,0,0.05)]">
+          <div className="flex flex-col gap-[14px] rounded-[20px] border border-[#E8E8E8] bg-white p-5 sm:p-[22px_24px] shadow-[0_10px_40px_rgba(0,0,0,0.05)]">
             <div className="font-sans text-[12px] font-semibold tracking-[0.08em] text-[#777777] uppercase">
               Or call directly
             </div>
@@ -183,7 +183,7 @@ export default function QuoteForm({ plannerSummary }) {
           </div>
         </div>
 
-        <div className="flex h-full flex-col gap-[22px] rounded-[24px] border border-[#E8E8E8] bg-white p-8 shadow-[0_10px_40px_rgba(0,0,0,0.08)] transition-shadow duration-250 hover:shadow-[0_16px_50px_rgba(0,0,0,0.1)]">
+        <div className="flex h-full flex-col gap-5 sm:gap-[22px] rounded-[24px] border border-[#E8E8E8] bg-white p-5 sm:p-8 shadow-[0_10px_40px_rgba(0,0,0,0.08)] transition-shadow duration-250 hover:shadow-[0_16px_50px_rgba(0,0,0,0.1)]">
           <div className="flex flex-col gap-3">
             <Bi
               en="What do you need?"
@@ -199,7 +199,7 @@ export default function QuoteForm({ plannerSummary }) {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 min-[480px]:grid-cols-2 gap-4">
             <label className="flex flex-col gap-2 text-[14px] font-medium text-[#222222]">
               <Bi en="Your name" ur="آپ کا نام" />
               <input
@@ -210,7 +210,7 @@ export default function QuoteForm({ plannerSummary }) {
                 aria-required="true"
                 aria-invalid={invalid && !name.trim()}
                 aria-describedby="quote-note"
-                className={`h-[52px] rounded-[14px] border bg-[#F8F7F3] px-4 text-[15px] font-normal outline-none transition-[box-shadow,border-color] duration-250 focus:border-[#111111] focus:shadow-[0_0_0_4px_rgba(17,17,17,0.08)] ${
+                className={`h-[52px] rounded-[14px] border bg-[#F8F7F3] px-4 text-[16px] font-normal outline-none transition-[box-shadow,border-color] duration-250 focus:border-[#111111] focus:shadow-[0_0_0_4px_rgba(17,17,17,0.08)] ${
                   invalid && !name.trim() ? 'border-[#C0392B]' : 'border-[#E8E8E8]'
                 }`}
               />
@@ -227,7 +227,7 @@ export default function QuoteForm({ plannerSummary }) {
                 aria-required="true"
                 aria-invalid={invalid && (!phone.trim() || phone.replace(/\D/g, '').length < 10)}
                 aria-describedby="quote-note"
-                className={`h-[52px] rounded-[14px] border bg-[#F8F7F3] px-4 text-[15px] font-normal outline-none transition-[box-shadow,border-color] duration-250 focus:border-[#111111] focus:shadow-[0_0_0_4px_rgba(17,17,17,0.08)] ${
+                className={`h-[52px] rounded-[14px] border bg-[#F8F7F3] px-4 text-[16px] font-normal outline-none transition-[box-shadow,border-color] duration-250 focus:border-[#111111] focus:shadow-[0_0_0_4px_rgba(17,17,17,0.08)] ${
                   invalid && (!phone.trim() || phone.replace(/\D/g, '').length < 10) ? 'border-[#C0392B]' : 'border-[#E8E8E8]'
                 }`}
               />
@@ -239,7 +239,7 @@ export default function QuoteForm({ plannerSummary }) {
             <select
               value={city}
               onChange={(e) => setCity(e.target.value)}
-              className="h-[52px] cursor-pointer rounded-[14px] border border-[#E8E8E8] bg-[#F8F7F3] px-4 text-[15px] font-normal text-[#222222] outline-none"
+              className="h-[52px] cursor-pointer rounded-[14px] border border-[#E8E8E8] bg-[#F8F7F3] px-4 text-[16px] font-normal text-[#222222] outline-none"
             >
               {CITIES.map((c) => (
                 <option key={c} value={c}>

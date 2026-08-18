@@ -65,9 +65,12 @@ export default function Footer() {
   }
 
   return (
-    <footer className="bg-dark px-5 pt-12 pb-8 text-[rgba(245,242,236,0.65)]">
-      <div className="mx-auto flex max-w-[1200px] flex-col gap-7">
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-7">
+    <footer
+      className="bg-dark px-5 pt-14 sm:pt-12 text-[rgba(245,242,236,0.65)]"
+      style={{ paddingBottom: 'max(2rem, calc(env(safe-area-inset-bottom, 0px) + 1.5rem))' }}
+    >
+      <div className="mx-auto flex max-w-[1200px] flex-col gap-8 sm:gap-7">
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-x-6 gap-y-8 sm:gap-7">
           <div className="flex flex-col gap-[10px]">
             <span className="flex items-center gap-[9px]">
               <span className="grid h-7 w-7 place-items-center rounded-[9px] bg-acc text-[12.5px] font-semibold text-ink">
@@ -143,7 +146,7 @@ export default function Footer() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder={lang === 'ur' ? 'آپ کا ای میل' : 'you@email.com'}
-                  className="min-w-0 flex-1 border-none bg-transparent text-[13.5px] text-paper outline-none placeholder:text-[rgba(245,242,236,0.4)]"
+                  className="min-w-0 flex-1 border-none bg-transparent text-[16px] sm:text-[13.5px] text-paper outline-none placeholder:text-[rgba(245,242,236,0.4)]"
                 />
                 <button
                   type="submit"
@@ -170,7 +173,7 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="flex flex-wrap justify-between gap-[14px] border-t border-[rgba(245,242,236,0.1)] pt-5 text-[11px] text-[rgba(245,242,236,0.58)]">
+        <div className="flex flex-col items-start gap-3 border-t border-[rgba(245,242,236,0.1)] pt-5 text-[11px] text-[rgba(245,242,236,0.58)] sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-[14px]">
           <span>© {new Date().getFullYear()} Chaudhary Electronics</span>
           <span className="flex flex-wrap gap-x-4 gap-y-1">
             <Link to="/privacy" className="hover:text-acc">

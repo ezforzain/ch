@@ -40,7 +40,7 @@ export default function Stepper({ value, onChange, min = 0 }) {
         type="button"
         aria-label="Decrease"
         onClick={() => onChange(Math.max(min, safeValue - 1))}
-        className="grid h-9 w-9 flex-shrink-0 place-items-center rounded-full text-lg font-semibold text-ink transition hover:bg-black/5 disabled:opacity-30"
+        className="grid h-11 w-11 flex-shrink-0 place-items-center rounded-full text-lg font-semibold text-ink transition hover:bg-black/5 disabled:opacity-30"
         disabled={safeValue <= min}
       >
         −
@@ -55,14 +55,14 @@ export default function Stepper({ value, onChange, min = 0 }) {
         onKeyDown={(e) => {
           if (e.key === 'Enter') e.currentTarget.blur();
         }}
-        className="w-12 flex-shrink-0 border-none bg-transparent text-center text-[15px] font-semibold tabular-nums text-ink outline-none"
+        className="w-12 flex-shrink-0 border-none bg-transparent text-center text-[16px] font-semibold tabular-nums text-ink outline-none"
         data-tnum
       />
       <button
         type="button"
         aria-label="Increase"
         onClick={() => onChange(safeValue + 1)}
-        className="grid h-9 w-9 flex-shrink-0 place-items-center rounded-full text-lg font-semibold text-ink transition hover:bg-black/5"
+        className="grid h-11 w-11 flex-shrink-0 place-items-center rounded-full text-lg font-semibold text-ink transition hover:bg-black/5"
       >
         +
       </button>

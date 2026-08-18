@@ -139,7 +139,39 @@ export default function Services() {
             ur="فوری موازنہ"
             className="m-0 mb-4 font-sans text-[20px] font-[650] tracking-[-0.022em]"
           />
-          <div className="overflow-x-auto rounded-[20px] border border-line bg-[#FBFAF7]">
+          {/* Mobile: one card per service — the desktop table's columns become labeled rows,
+              avoiding both a squeezed table and a horizontal scroll on narrow phones. */}
+          <div className="flex flex-col gap-3 sm:hidden">
+            {services.map((s) => (
+              <div key={s.id} className="rounded-[18px] border border-line bg-[#FBFAF7] p-4">
+                <div className="text-[15px] font-semibold text-ink">{s.title}</div>
+                <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-3">
+                  <div>
+                    <dt className="text-[10.5px] font-semibold uppercase tracking-[0.075em] text-mut">
+                      Typical cost
+                    </dt>
+                    <dd className="mt-1 text-[13.5px] font-semibold text-ink" data-tnum>
+                      {s.cost}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-[10.5px] font-semibold uppercase tracking-[0.075em] text-mut">
+                      Install time
+                    </dt>
+                    <dd className="mt-1 text-[13.5px] font-semibold text-ink">{s.installTime}</dd>
+                  </div>
+                  <div className="col-span-2">
+                    <dt className="text-[10.5px] font-semibold uppercase tracking-[0.075em] text-mut">
+                      Best for
+                    </dt>
+                    <dd className="mt-1 text-[13.5px] text-mut">{s.bestFor}</dd>
+                  </div>
+                </dl>
+              </div>
+            ))}
+          </div>
+
+          <div className="hidden overflow-x-auto rounded-[20px] border border-line bg-[#FBFAF7] sm:block">
             <table className="w-full min-w-[640px] border-collapse">
               <thead>
                 <tr className="border-b border-line">
