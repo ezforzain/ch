@@ -127,6 +127,20 @@ export default function MarketplaceSection() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Cart icon in the navbar links here with ?cart=open (there's no global cart drawer,
+  // so this is the one place that can actually show it) — open the drawer once on
+  // arrival and strip the param so it doesn't reopen on a later navigation within the
+  // marketplace (e.g. paging, back/forward).
+  useEffect(() => {
+    if (searchParams.get('cart') !== 'open') return;
+    setDrawerKind('cart');
+    setSheet('drawer');
+    const next = new URLSearchParams(searchParams);
+    next.delete('cart');
+    setSearchParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const loadTimer = useRef(null);
 
   const softLoad = useCallback((patch) => {

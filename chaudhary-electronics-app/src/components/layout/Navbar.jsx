@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { LogIn, LogOut, ShieldCheck, UserCircle } from 'lucide-react';
+import { LogIn, LogOut, ShieldCheck, ShoppingCart, UserCircle } from 'lucide-react';
 import { useLang } from '../../i18n/LangContext';
 import { useAuth } from '../../context/AuthContext';
+import { useCart } from '../../context/CartContext';
 import { useToast } from '../../context/ToastContext';
 import { resolveImageUrl } from '../../lib/api';
 import { useScrollY } from '../../hooks/useScrollY';
@@ -39,6 +40,7 @@ const NAV_LINKS = [
 export default function Navbar() {
   const { lang, toggleLang } = useLang();
   const { user, logout } = useAuth();
+  const { cartUnits } = useCart();
   const showToast = useToast();
   const navigate = useNavigate();
   const scrollY = useScrollY();
@@ -219,6 +221,23 @@ export default function Navbar() {
           >
             <span aria-hidden="true">⌕</span>
           </button>
+
+          <Link
+            to="/marketplace?cart=open"
+            title="Cart"
+            aria-label={`Cart${cartUnits > 0 ? `, ${cartUnits} item${cartUnits === 1 ? '' : 's'}` : ''}`}
+            className="relative grid h-10 w-10 sm:h-12 sm:w-12 flex-shrink-0 place-items-center rounded-full border border-line bg-white/50 text-[15px] sm:text-[16px] text-mut transition-[color,box-shadow] duration-250 hover:text-ink hover:shadow-[0_6px_16px_-6px_rgba(23,21,15,0.25)]"
+          >
+            <ShoppingCart className="h-[17px] w-[17px] sm:h-[19px] sm:w-[19px]" aria-hidden="true" />
+            {cartUnits > 0 && (
+              <span
+                data-tnum
+                className="absolute -top-1 -right-1 grid min-w-[18px] place-items-center rounded-full bg-acc px-1 py-0.5 text-[10px] leading-none font-bold text-ink"
+              >
+                {cartUnits > 99 ? '99+' : cartUnits}
+              </span>
+            )}
+          </Link>
 
           <button
             type="button"
