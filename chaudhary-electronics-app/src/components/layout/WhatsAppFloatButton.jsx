@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { useScrollY } from '../../hooks/useScrollY';
 import { waLink } from '../../lib/format';
 
@@ -14,6 +15,10 @@ const PHONE_TEL = '+920000000000';
  * shown once scrolled past ~1.1 viewport heights, hidden again near the
  * bottom of the page) these lift further up the screen so the two never
  * overlap on narrow viewports either.
+ *
+ * Faded out once the footer scrolls into view: past that point there's
+ * nothing left to float over except the footer's own newsletter/social
+ * row, and the footer already repeats the same phone number.
  */
 export default function WhatsAppFloatButton() {
   const scrollY = useScrollY();
@@ -21,11 +26,20 @@ export default function WhatsAppFloatButton() {
   const scrollHeight = typeof document !== 'undefined' ? document.body.scrollHeight : 0;
   const ctaBarVisible = scrollY > vh * 1.1 && scrollY < scrollHeight - vh * 1.9;
 
+  const [overFooter, setOverFooter] = useState(false);
+  useEffect(() => {
+    const footer = document.querySelector('footer');
+    if (!footer) return;
+    setOverFooter(footer.getBoundingClientRect().top < window.innerHeight);
+  }, [scrollY]);
+
   return (
     <div
-      className="fixed right-4 z-[870] flex flex-col items-end gap-2.5 transition-[bottom] duration-[550ms] ease-[cubic-bezier(0.2,0.7,0.2,1)] sm:right-6 sm:gap-3"
+      className="fixed right-4 z-[870] flex flex-col items-end gap-2.5 transition-[bottom,opacity] duration-[550ms] ease-[cubic-bezier(0.2,0.7,0.2,1)] sm:right-6 sm:gap-3"
       style={{
         bottom: `calc(env(safe-area-inset-bottom, 0px) + ${ctaBarVisible ? '86px' : '18px'})`,
+        opacity: overFooter ? 0 : 1,
+        pointerEvents: overFooter ? 'none' : 'auto',
       }}
     >
       <a
